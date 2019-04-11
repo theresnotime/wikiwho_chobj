@@ -4,30 +4,54 @@ import pandas as pd
 import os
 import traceback
 
+import sys 
+sys.path.append("../wikiwho_pickle")
 from wikiwho import open_pickle
 from WikiWho.wikiwho import Wikiwho as BaseWikiwho
+from WikiWho.utils import iter_rev_tokens
 import pdb
 
-def get_contents(baseurl, content, start_rev_id, end_rev_id, ww_object):
-    pdb.set_trace()
+def get_contents(start_rev_id, end_rev_id, ww_object):
+    if not end_rev_id:
+        revision_ids = [int(start_rev_id)]
+    else:
+        revision_ids = ww_object.ordered_revisions[int(start_rev_id):int(end_rev_id)]
 
-    content_url = os.path.join(baseurl, "rev_content", content, str(start_rev_id)+"/")
-    if end_rev_id:
-        content_url = os.path.join(content_url, str(end_rev_id)+"/")
-    params = { "o_rev_id": "false", "editor": "false", "token_id": "true", "in": "false", "out": "false" }
-    try:
-        response = requests.get(content_url, params= params)
-        if response.status_code == requests.codes.ok: 
-            response = response.json()
-            if "revisions" in response.keys() :
-                return response["revisions"]
-            elif "revisions" not in response.keys() : 
-                raise AttributeError("Server did not return revisions key it returned \t"+response.keys())
-        elif response.status_code != requests.codes.ok : 
-            print(content_url)
-            raise AttributeError("Server returned bad code\t"+response.status_code)
-    except:
-        print(traceback.format_exc())
+    revisions = []
+    for rev_id in revision_ids:
+        pdb.set_trace()
+        # Prepare output revision content according to parameters
+        cur_rev = ww_object.revisions[rev_id]
+        tokens = []
+        revisions.append({str(rev_id): {"editor": cur_rev.editor,
+                                                "time": cur_rev.timestamp,
+                                                "tokens": tokens}})
+        for word in iter_rev_tokens(cur_rev):
+            token = dict()
+            token['str'] = word.value
+            token['token_id'] = word.token_id
+            tokens.append(token)
+    return revisions
+
+
+    # content_url = os.path.join(baseurl, "rev_content", content, str(start_rev_id)+"/")
+    # if end_rev_id:
+    #     content_url = os.path.join(content_url, str(end_rev_id)+"/")
+    # params = { "o_rev_id": "false", "editor": "false", "token_id": "true", "in": "false", "out": "false" }
+    # try:
+    #     response = requests.get(content_url, params= params)
+    #     if response.status_code == requests.codes.ok: 
+    #         response = response.json()
+    #         if "revisions" in response.keys() :
+    #             pdb.set_trace()
+    #             return response["revisions"]
+    #         elif "revisions" not in response.keys() : 
+    #             raise AttributeError("Server did not return revisions key it returned \t"+response.keys())
+    #     elif response.status_code != requests.codes.ok : 
+    #         print(content_url)
+    #         raise AttributeError("Server returned bad code\t"+response.status_code)
+    # except:
+    #     print(traceback.format_exc())
 
 #pads each revisions content with a start and end 
 def tokens_to_df(tokens):
@@ -41,16 +65,17 @@ def save_content(revison_series, filename, content, ww_object, step=200, baseurl
     with pd.HDFStore(filename, 'a') as store:
         try:
             for to_index in  range(0, end_index, step):    
-                rev_contents = get_contents(baseurl, content, str(revison_series[from_index]), str(revison_series[to_index]), ww_object=ww_object)
+                rev_contents = get_contents(start_rev_id=str(revison_series[from_index]), end_rev_id=str(revison_series[to_index]), ww_object=ww_object)
                 from_index = to_index
                 for rev_content in rev_contents:
                     key = "r"+list(rev_content.keys())[0]
                     df = tokens_to_df(list(rev_content.values())[0]["tokens"])
                     store.put(key, df, table=False)
             to_index = from_index + (end_index-1)%step
-            rev_contents = get_contents(baseurl, content, str(revison_series[from_index]), str(revison_series[to_index]), ww_object=ww_object)
-            rev_contents.extend(get_contents(baseurl, content, str(revison_series[to_index])))
+            rev_contents = get_contents(start_rev_id=str(revison_series[from_index]), end_rev_id=str(revison_series[to_index]), ww_object=ww_object)
+            rev_contents.extend(get_contents(ww_object=ww_object, start_rev_id=str(revison_series[to_index]), end_rev_id=None))
             for rev_content in rev_contents:
+                pdb.set_trace()
                 key = "r"+list(rev_content.keys())[0]
                 df = tokens_to_df(list(rev_content.values())[0]["tokens"])
                 store.put(key, df, table=False)
