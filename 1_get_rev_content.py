@@ -19,7 +19,6 @@ def get_contents(start_rev_id, end_rev_id, ww_object):
 
     revisions = []
     for rev_id in revision_ids:
-        pdb.set_trace()
         # Prepare output revision content according to parameters
         cur_rev = ww_object.revisions[rev_id]
         tokens = []
@@ -75,7 +74,6 @@ def save_content(revison_series, filename, content, ww_object, step=200, baseurl
             rev_contents = get_contents(start_rev_id=str(revison_series[from_index]), end_rev_id=str(revison_series[to_index]), ww_object=ww_object)
             rev_contents.extend(get_contents(ww_object=ww_object, start_rev_id=str(revison_series[to_index]), end_rev_id=None))
             for rev_content in rev_contents:
-                pdb.set_trace()
                 key = "r"+list(rev_content.keys())[0]
                 df = tokens_to_df(list(rev_content.values())[0]["tokens"])
                 store.put(key, df, table=False)
@@ -115,10 +113,6 @@ def save_article(article_name, ww_object, baseurl="https://api.wikiwho.net/en/ap
 
     save_content(rev_list_df["id"], save_path, article_name, ww_object=ww_object, step=step)
 
-
-
-
-# In[8]:
 
 if __name__ == "__main__":
     obj = open_pickle(6187, lang='en')
