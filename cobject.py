@@ -49,40 +49,12 @@ class ChangeObject:
             
         return wiki
 
-    def was_added(self, x, revision):
-        i = x["in"]
-        o = x["out"]
-        i_cleaned = []
-        o_cleaned = []
-        for rev in i:
-            if rev <= revision:
-                i_cleaned.append(rev)
-        for rev in o:
-            if rev <= revision:
-                o_cleaned.append(rev)
-        if (len(i_cleaned) == len(o_cleaned)):
-            x.added = True
-        return x
-
-    def add_start_end_token(self, df, add_false=True):
-        if add_false:
-            df.loc[len(df)] = ["{$nd}", -2, False]
-            df.loc[-1] = ["{st@rt}", -1, False]
-        else:
-            df.loc[len(df)] = ["{$nd}", -2]
-            df.loc[-1] = ["{st@rt}", -1]      
-        df.index = df.index+1
-        df.sort_index(inplace=True)
-        return df
-
     def df_rev_content(self, key, first=False):
-        rev_content = self.ww.api.specific_rev_content_by_rev_id(key, o_rev_id=False, editor=False)["revisions"][0][str(key)]["tokens"]
+        rev_content = self.ww.api.specific_rev_content_by_rev_id(
+            key, o_rev_id=False, editor=False, _in=False, out=False)["revisions"][0][str(key)]["tokens"]
+        rev_content.insert(0, {'str': '{st@rt}', 'token_id': -1})
+        rev_content.append({'str':'{$nd}', 'token_id': -2}) 
         rev_content = pd.DataFrame(rev_content)
-        rev_content["added"] = pd.Series(np.full((len(rev_content),), False))
-        rev_content = rev_content.apply(lambda x: self.was_added(x, key),axis=1)
-        del rev_content["in"]
-        del rev_content["out"]
-        rev_content = self.add_start_end_token(rev_content)
         return rev_content
 
     def get_str_tokenid_for_rev(self, rev):
