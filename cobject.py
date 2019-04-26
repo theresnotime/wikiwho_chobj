@@ -26,12 +26,9 @@ class ChangeObject:
     def create(self):
         self.ww = WikiWho(protocol="http", domain="10.6.13.139")
 
-        r_ids = self.ww.api.rev_ids_of_article("Bioglass")
-        rev_list = pd.DataFrame(r_ids["revisions"])
-        all_rev = pd.DataFrame(
-            self.ww.api.all_content("Bioglass")["all_tokens"])
-        del all_rev["editor"]
-        all_tokens = all_rev.to_dict(orient="records")
+        rev_list = pd.DataFrame(self.ww.api.rev_ids_of_article("Bioglass")["revisions"])
+        all_tokens = self.ww.api.all_content("Bioglass", editor=False)["all_tokens"]
+
 
         # making revision objects
         revs = rev_list.apply(lambda rev: Revision(
