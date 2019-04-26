@@ -62,15 +62,6 @@ class ChangeObject:
         rev_content = pd.DataFrame(rev_content)
         return rev_content
 
-    def get_str_tokenid_for_rev(self, rev):
-        strs = [tok["str"] for tok in self.ww.dv.api.specific_rev_content_by_rev_id(
-            key)["revisions"][0][str(key)]["tokens"]]
-        tokens = [tok["token_id"] for tok in self.ww.dv.api.specific_rev_content_by_rev_id(
-            key)["revisions"][0][str(key)]["tokens"]]
-        rev_len_list = pd.DataFrame({"str": strs, "token_id": tokens})
-        rev_len_list = self.add_start_end_token(rev_len_list, add_false=False)
-        return rev_len_list
-
     def create(self):
         self.ww = WikiWho(protocol="http", domain="10.6.13.139")
 
