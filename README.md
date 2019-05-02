@@ -1,2 +1,3 @@
 # wikiwho_chobj
-Creates change objecs based on WikiWho
+
+Creates change objecs based on WikiWho.
