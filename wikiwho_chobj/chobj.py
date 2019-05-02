@@ -1,15 +1,13 @@
-from wiki import Wiki
-from revision import Revision
-from wikiwho_wrapper import WikiWho
-import pandas as pd
-from time import sleep
-import pickle
-import numpy as np
-import traceback
 import os
+import pickle
+from time import sleep
 
+import pandas as pd
 
-class ChangeObject:
+from .wiki import Wiki
+from .revision import Revision
+
+class Chobjer:
 
     def __init__(self, wikiwho, article_name, epsilon_size):
         self.ww = wikiwho
@@ -54,7 +52,6 @@ class ChangeObject:
                 from_rev_id, to_rev_id, to_rev_content, self.epsilon_size)
             from_rev_id = to_rev_id
             print(i)
-            # sleep(1)
 
     def save(self, save_dir):
         save_filepath = os.path.join(
@@ -88,18 +85,3 @@ class ChangeObject:
         change_df.to_hdf(change_dataframe_path, key="data", mode='w')
 
 
-if __name__ == "__main__":
-    epsilon_size = 30
-    change_object_dir = "data/change objects/"
-
-    # REMOTE 
-    #ww = WikiWho(protocol="http", domain="10.6.13.139")
-    #co = ChangeObject(ww, "Bioglass", epsilon_size)
-
-    # LOCAL
-    ww = WikiWho(pickle_path='pickles', lng='en')
-    3co = ChangeObject(ww, 2161298, epsilon_size)
-
-    co.create()
-    co.save(change_object_dir)
-    co.save_hd5(change_object_dir)
