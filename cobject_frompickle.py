@@ -11,21 +11,23 @@ import os
 
 class ChangeObject:
 
-    def __init__(self, article_name, epsilon_size):
+    def __init__(self, wikiwho, article_name, epsilon_size):
+        self.ww = wikiwho
         self.article_name = article_name
         self.epsilon_size = epsilon_size
 
     def df_rev_content(self, rev_id, first=False):
         rev_content = self.ww.api.specific_rev_content_by_rev_id(
-            rev_id, article_id=self.article_name,  o_rev_id=False, editor=False, _in=False, out=False)["revisions"][0][rev_id]["tokens"]
+            rev_id, self.article_name,  o_rev_id=False, editor=False, _in=False, out=False
+            )["revisions"][0]
+        _, rev_content = next(iter(rev_content.items()))
+        rev_content = rev_content['tokens']
         rev_content.insert(0, {'str': '{st@rt}', 'token_id': -1})
         rev_content.append({'str': '{$nd}', 'token_id': -2})
         rev_content = pd.DataFrame(rev_content)
         return rev_content
 
     def create(self):
-        #self.ww = WikiWho(protocol="http", domain="10.6.13.139")
-        self.ww = WikiWho(pickle_path='pickles', lng='en')
 
         rev_list = pd.DataFrame(self.ww.api.rev_ids_of_article(
             self.article_name)["revisions"])
@@ -56,7 +58,7 @@ class ChangeObject:
 
     def save(self, save_dir):
         save_filepath = os.path.join(
-            save_dir, self.article_name + "_change.pkl")
+            save_dir, f"{self.article_name}_change.pkl")
         with open(save_filepath, "wb") as file:
             pickle.dump(self.wiki, file)
 
@@ -82,15 +84,22 @@ class ChangeObject:
                               "from revision id", "to revision id", "timestamp", "timegap", "editor"])
 
         change_dataframe_path = os.path.join(
-            save_dir, self.article_name + "_change.h5")
+            save_dir, f"{self.article_name}_change.h5")
         change_df.to_hdf(change_dataframe_path, key="data", mode='w')
 
 
 if __name__ == "__main__":
     epsilon_size = 30
-    article_name = 'Bioglass'
     change_object_dir = "data/change objects/"
-    co = ChangeObject(article_name, epsilon_size)
+
+    # REMOTE 
+    #ww = WikiWho(protocol="http", domain="10.6.13.139")
+    #co = ChangeObject(ww, "Bioglass", epsilon_size)
+
+    # LOCAL
+    ww = WikiWho(pickle_path='pickles', lng='en')
+    3co = ChangeObject(ww, 2161298, epsilon_size)
+
     co.create()
     co.save(change_object_dir)
     co.save_hd5(change_object_dir)
