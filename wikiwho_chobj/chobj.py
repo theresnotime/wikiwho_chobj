@@ -42,30 +42,59 @@ class Chobjer:
     def get_rev_content(self, rev_id):
         return pd.DataFrame(self.__iter_rev_content(rev_id), columns=['str', 'token_id'])
 
+
     def create(self):
 
         with Timer():
 
             # PRESENT
             revs = self.get_revisions()
+            from_rev_id = revs.index[0]
+
 
             # FUTURE
-            # revs = self.get_revisions_dict()
+            revs = self.get_revisions_dict()
+            revs_iter = iter(revs.items())
+            from_rev_id, first_rev = next(revs_iter)
+            first_rev.content = self.get_rev_content(from_rev_id)
 
             # Getting first revision object and adding content ot it
-            from_rev_id = revs.index[0]
             self.wiki = Wiki(self.article_name, revs, self.ww.api.ww.tokens)
-
-            self.wiki.revisions.iloc[0].content = self.get_rev_content(
-                from_rev_id)
 
             # adding content to all other revision and finding change object
             # between them.
-            for i, to_rev_id in enumerate(list(revs.index[1:])):
+            for to_rev_id, _ in revs_iter:
+            #for i, to_rev_id in enumerate(list(revs.index[1:])):
                 to_rev_content = self.get_rev_content(to_rev_id)
                 self.wiki.create_change(
                     from_rev_id, to_rev_id, to_rev_content, self.epsilon_size)
                 from_rev_id = to_rev_id
+
+    # def create(self):
+
+    #     with Timer():
+
+    #         # PRESENT
+    #         revs = self.get_revisions()
+    #         from_rev_id = revs.index[0]
+
+    #         # FUTURE
+    #         # revs = self.get_revisions_dict()
+
+    #         # Getting first revision object and adding content ot it
+            
+    #         self.wiki = Wiki(self.article_name, revs, self.ww.api.ww.tokens)
+
+    #         self.wiki.revisions.iloc[0].content = self.get_rev_content(
+    #             from_rev_id)
+
+    #         # adding content to all other revision and finding change object
+    #         # between them.
+    #         for i, to_rev_id in enumerate(list(revs.index[1:])):
+    #             to_rev_content = self.get_rev_content(to_rev_id)
+    #             self.wiki.create_change(
+    #                 from_rev_id, to_rev_id, to_rev_content, self.epsilon_size)
+    #             from_rev_id = to_rev_id
 
     def save(self, save_dir):
         save_filepath = os.path.join(
@@ -75,19 +104,25 @@ class Chobjer:
 
     def save_hd5(self, save_dir):
 
-        change_objects = []
-        self.wiki.revisions.iloc[
-            :-1].apply(lambda revision: change_objects.append(revision.change_df))
+        # PAST
+        # revisions = self.wiki.revisions.tolist()
+        # revisions = pd.Series(data=revisions, index=(r.id for r in revisions ))
+
+        revisions = self.wiki.revisions
+        revisions = pd.Series(data=revisions, index=(r.id for r in revisions.values() ))
+
+        change_objects = [x.change_df for x in revisions if hasattr(x, 'change_df')]
 
         timestamp_s = pd.to_datetime(
-            [rev.timestamp for rev in self.wiki.revisions.values.ravel().tolist()])
+            [rev.timestamp for rev in revisions.values.ravel().tolist()])
+
         time_gap = pd.to_timedelta(timestamp_s[1:] - timestamp_s[:-1])
 
-        rev_ids = [rev.id for rev in self.wiki.revisions.tolist()]
+        rev_ids = [rev.id for rev in revisions.tolist()]
         from_rev_ids = rev_ids[:-1]
         to_rev_ids = rev_ids[1:]
 
-        editor_s = [rev.editor for rev in self.wiki.revisions.tolist()]
+        editor_s = [rev.editor for rev in revisions.tolist()]
 
         index = list(zip(*[from_rev_ids, to_rev_ids,
                            timestamp_s.tolist()[1:], time_gap, editor_s[1:]]))

@@ -15,11 +15,11 @@ class Wiki:
     def add_all_token(self, tokens):
         for token in tokens:
             # token.str
-            self.revisions.loc[token.origin_rev_id].added.add(token.token_id)
+            self.revisions[token.origin_rev_id].added.add(token.token_id)
             for in_revision in token.inbound:
-                self.revisions.loc[in_revision].added.add(token.token_id)
+                self.revisions[in_revision].added.add(token.token_id)
             for out_revision in token.outbound:
-                self.revisions.loc[out_revision].removed.add(token.token_id)
+                self.revisions[out_revision].removed.add(token.token_id)
 
     def create_change(self, from_rev_id, to_rev_id, to_rev_content, epsilon_size):
         try:
