@@ -38,14 +38,6 @@ class Chobjer:
             yield (word.value, word.token_id)
         yield ('{$nd}', -2)
 
-    def get_all_content(self):
-        return [{
-                'str': word.value,
-                'o_rev_id': word.origin_rev_id,
-                'token_id': word.token_id,
-                'in': word.inbound,
-                'out': word.outbound
-                } for word in self.ww.api.ww.tokens ]
 
     def get_rev_content(self, rev_id):
         return pd.DataFrame(self.__iter_rev_content(rev_id), columns=['str', 'token_id'])
@@ -53,13 +45,6 @@ class Chobjer:
     def create(self):
 
         with Timer():
-
-            # PAST
-            # rev_list = pd.DataFrame(self.ww.api.rev_ids_of_article(
-            #     self.article_name)["revisions"])
-            # revs = rev_list.apply(lambda rev: Revision(
-            #     rev["id"], rev["timestamp"], rev["editor"]), axis=1)
-            # revs.index = rev_list.id
 
             # PRESENT
             revs = self.get_revisions()
