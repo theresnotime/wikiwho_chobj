@@ -1,5 +1,6 @@
 import os
 import pickle
+import datetime
 from time import sleep
 
 import pandas as pd
@@ -29,8 +30,12 @@ class Chobjer:
 
     def get_revisions_dict(self):
         revisions = self.ww.api.ww.revisions
-        return {rev_id: Revision(rev_id, revisions[rev_id].timestamp,
-                                 revisions[rev_id].editor) for rev_id in self.ww.api.ww.ordered_revisions}
+        return {rev_id: Revision(
+            rev_id,
+            datetime.datetime.strptime(
+                revisions[rev_id].timestamp, r'%Y-%m-%dT%H:%M:%SZ'),
+            # revisions[rev_id].timestamp,
+            revisions[rev_id].editor) for rev_id in self.ww.api.ww.ordered_revisions}
 
     def __iter_rev_content(self, rev_id):
         yield ('{st@rt}', -1)
@@ -56,8 +61,31 @@ class Chobjer:
         for to_rev_id, _ in revs_iter:
             # for i, to_rev_id in enumerate(list(revs.index[1:])):
             to_rev_content = self.get_rev_content(to_rev_id)
+
             self.wiki.create_change(
                 from_rev_id, to_rev_id, to_rev_content, self.epsilon_size)
+            from_rev_id = to_rev_id
+
+    def create_change_objects_per_rev(self):
+
+        revs = self.get_revisions_dict()
+        revs_iter = iter(revs.items())
+        from_rev_id, first_rev = next(revs_iter)
+        first_rev.from_id = None
+        first_rev.content = self.get_rev_content(from_rev_id)
+
+        # Getting first revision object and adding content ot it
+        self.wiki = Wiki(self.article_name, revs, self.ww.api.ww.tokens)
+
+        # adding content to all other revision and finding change object
+        # between them.
+        for to_rev_id, _ in revs_iter:
+            # for i, to_rev_id in enumerate(list(revs.index[1:])):
+            to_rev_content = self.get_rev_content(to_rev_id)
+            chobjs = self.wiki.get_chobjs(
+                from_rev_id, to_rev_id, to_rev_content, self.epsilon_size)           
+            if len(chobjs[-1]) > 0:
+                yield chobjs
             from_rev_id = to_rev_id
 
     def save(self, save_dir):

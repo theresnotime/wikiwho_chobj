@@ -52,15 +52,25 @@ class Revision:
 
     def append_neighbour_vec(self, to_rev, epsilon_size):
         self.wiki_who_tokens = self.content.token_id.values
+        self.wiki_who_tokens_str = self.content.str.values
         del self.content
         neighbour_df = self.change.apply(
             self.find_tokens, axis=1, args=(self, to_rev, epsilon_size))
-        neighbour_df.columns = ["ins_tokens", "del_tokens",
-                                "left_neigh_slice", "right_neigh_slice", "left_token", "right_token"]
-        self.change_df = pd.concat(
-            [self.change, neighbour_df], sort=False, axis=1)
+
+        if len(neighbour_df) > 0:
+
+            neighbour_df.columns = ["ins_tokens", "del_tokens",
+                                    "ins_tokens_str", "del_tokens_str",
+                                    "left_neigh_slice", "right_neigh_slice", 
+                                    "left_token_str", "right_token_str"]
+
+            self.change_df = pd.concat(
+                [self.change, neighbour_df], sort=False, axis=1)
+
+
 
     def find_tokens(self, change, revision, to_rev, epsilon_size):
+        
         start_left = (int(change["left_neigh"]) - epsilon_size)
         if start_left < 0:
             start_left = 0
@@ -71,17 +81,57 @@ class Revision:
             end_right = revision.wiki_who_tokens.size - 1
         right_neigh = slice(int(change["right_neigh"]), end_right)
         if(change["ins_start_pos"] == -1):
-            ins_tokens = []
+            ins_tokens = ins_tokens_str = []
         else:
             ins_slice = slice(int(change["ins_start_pos"]), int(
                 change["ins_end_pos"] + 1))
             ins_tokens = to_rev.content.token_id.values[ins_slice]
+            ins_tokens_str = to_rev.content.str.values[ins_slice]
+
         if(change["del_start_pos"] == -1):
-            del_tokens = []
+            del_tokens = del_tokens_str = []
         else:
             del_slice = slice(int(change["del_start_pos"]), int(
                 change["del_end_pos"] + 1))
             del_tokens = revision.wiki_who_tokens[del_slice]
-        left_token = revision.wiki_who_tokens[left_neigh]
-        right_token = revision.wiki_who_tokens[right_neigh]
-        return pd.Series([tuple(ins_tokens), tuple(del_tokens), left_neigh, right_neigh, tuple(left_token), tuple(right_token)])
+            del_tokens_str = revision.wiki_who_tokens_str[del_slice]
+
+        left_token = revision.wiki_who_tokens_str[left_neigh]
+        right_token = revision.wiki_who_tokens_str[right_neigh]
+        return pd.Series([
+            tuple(ins_tokens), tuple(del_tokens), 
+            tuple(ins_tokens_str), tuple(del_tokens_str),
+            left_neigh, right_neigh, 
+            tuple(left_token), tuple(right_token)])
+
+
+    # def find_tokens(self, change, revision, to_rev, epsilon_size):
+    #     start_left = (int(change["left_neigh"]) - epsilon_size)
+    #     if start_left < 0:
+    #         start_left = 0
+    #     left_neigh = slice(start_left, int(change["left_neigh"]) + 1)
+
+    #     end_right = (int(change["right_neigh"]) + epsilon_size + 1)
+    #     if end_right >= revision.wiki_who_tokens.size:
+    #         end_right = revision.wiki_who_tokens.size - 1
+    #     right_neigh = slice(int(change["right_neigh"]), end_right)
+    #     if(change["ins_start_pos"] == -1):
+    #         ins_tokens = []
+    #     else:
+    #         ins_slice = slice(int(change["ins_start_pos"]), int(
+    #             change["ins_end_pos"] + 1))
+    #         ins_tokens = to_rev.content.token_id.values[ins_slice]
+    #     if(change["del_start_pos"] == -1):
+    #         del_tokens = []
+    #     else:
+    #         del_slice = slice(int(change["del_start_pos"]), int(
+    #             change["del_end_pos"] + 1))
+    #         del_tokens = revision.wiki_who_tokens[del_slice]
+    #     left_token = revision.wiki_who_tokens_str[left_neigh]
+    #     right_token = revision.wiki_who_tokens_str[right_neigh]
+    #     return pd.Series([
+    #         tuple(ins_tokens), tuple(del_tokens), 
+    #         left_neigh, right_neigh, 
+    #         left_neigh, right_neigh, 
+    #         tuple(left_token), tuple(right_token)])
+
