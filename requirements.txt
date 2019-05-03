@@ -1,7 +1,6 @@
 pandas
 numpy
 requests
-jupyter
 nbstripout
 wikiwho_wrapper
 
