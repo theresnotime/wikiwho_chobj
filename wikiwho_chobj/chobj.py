@@ -35,30 +35,25 @@ class Chobjer:
             yield (word.value, word.token_id)
         yield ('{$nd}', -2)
 
-    def get_rev_content_old(self, rev_id):
-        rev_content = self.ww.api.specific_rev_content_by_rev_id(
-            rev_id, self.article_name, o_rev_id=False, editor=False, _in=False, out=False
-        )["revisions"][0]
-        _, rev_content = next(iter(rev_content.items()))
-        rev_content = rev_content['tokens']
-        rev_content.insert(0, {'str': '{st@rt}', 'token_id': -1})
-        rev_content.append({'str': '{$nd}', 'token_id': -2})
-        rev_content = pd.DataFrame(rev_content)
-        df = self.get_rev_content(rev_id)
-        return rev_content
+    def get_all_content(self):
+        return [{
+                'str': word.value,
+                'o_rev_id': word.origin_rev_id,
+                'token_id': word.token_id,
+                'in': word.inbound,
+                'out': word.outbound
+                } for word in self.ww.api.ww.tokens ]
 
     def get_rev_content(self, rev_id):
         return pd.DataFrame(self.__iter_rev_content(rev_id), columns=['str', 'token_id'])
 
     def create(self):
 
-        all_tokens = self.ww.api.all_content(
-            self.article_name, editor=False)["all_tokens"]
+        all_tokens = self.get_all_content()
 
         # PAST
-        rev_list = pd.DataFrame(self.ww.api.rev_ids_of_article(
-            self.article_name)["revisions"])
-
+        # rev_list = pd.DataFrame(self.ww.api.rev_ids_of_article(
+        #     self.article_name)["revisions"])
         # revs = rev_list.apply(lambda rev: Revision(
         #     rev["id"], rev["timestamp"], rev["editor"]), axis=1)
         # revs.index = rev_list.id
@@ -83,7 +78,6 @@ class Chobjer:
             self.wiki.create_change(
                 from_rev_id, to_rev_id, to_rev_content, self.epsilon_size)
             from_rev_id = to_rev_id
-            print(i)
 
     def save(self, save_dir):
         save_filepath = os.path.join(
