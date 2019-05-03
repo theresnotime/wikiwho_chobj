@@ -8,7 +8,7 @@ if __name__ == "__main__":
 
     # REMOTE
     #ww = WikiWho(protocol="http", domain="10.6.13.139")
-    #co = ChangeObject(ww, "Bioglass", epsilon_size)
+    #co = Chobjer(ww, "Bioglass", epsilon_size)
 
     # LOCAL
     ww = WikiWho(pickle_path='pickles', lng='en')

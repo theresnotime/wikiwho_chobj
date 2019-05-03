@@ -4,8 +4,12 @@ from time import sleep
 
 import pandas as pd
 
+from WikiWho.utils import iter_rev_tokens
+
 from .wiki import Wiki
 from .revision import Revision
+from .utils import Timer
+
 
 class Chobjer:
 
@@ -14,40 +18,68 @@ class Chobjer:
         self.article_name = article_name
         self.epsilon_size = epsilon_size
 
-    def df_rev_content(self, rev_id, first=False):
+    def get_revisions(self):
+        revisions = self.ww.api.ww.revisions
+        return pd.DataFrame.from_records(((rev_id, Revision(rev_id, revisions[rev_id].timestamp,
+                                                            revisions[rev_id].editor)) for rev_id in self.ww.api.ww.ordered_revisions),
+                                         columns=['id', ''], index='id').iloc[:, 0]
+
+    def get_revisions_dict(self):
+        revisions = self.ww.api.ww.revisions
+        return {rev_id: Revision(rev_id, revisions[rev_id].timestamp,
+                                 revisions[rev_id].editor) for rev_id in self.ww.api.ww.ordered_revisions}
+
+    def __iter_rev_content(self, rev_id):
+        yield ('{st@rt}', -1)
+        for word in iter_rev_tokens(self.ww.api.ww.revisions[rev_id]):
+            yield (word.value, word.token_id)
+        yield ('{$nd}', -2)
+
+    def get_rev_content_old(self, rev_id):
         rev_content = self.ww.api.specific_rev_content_by_rev_id(
-            rev_id, self.article_name,  o_rev_id=False, editor=False, _in=False, out=False
-            )["revisions"][0]
+            rev_id, self.article_name, o_rev_id=False, editor=False, _in=False, out=False
+        )["revisions"][0]
         _, rev_content = next(iter(rev_content.items()))
         rev_content = rev_content['tokens']
         rev_content.insert(0, {'str': '{st@rt}', 'token_id': -1})
         rev_content.append({'str': '{$nd}', 'token_id': -2})
         rev_content = pd.DataFrame(rev_content)
+        df = self.get_rev_content(rev_id)
         return rev_content
+
+    def get_rev_content(self, rev_id):
+        return pd.DataFrame(self.__iter_rev_content(rev_id), columns=['str', 'token_id'])
 
     def create(self):
 
-        rev_list = pd.DataFrame(self.ww.api.rev_ids_of_article(
-            self.article_name)["revisions"])
         all_tokens = self.ww.api.all_content(
             self.article_name, editor=False)["all_tokens"]
 
-        # making revision objects
-        revs = rev_list.apply(lambda rev: Revision(
-            rev["id"], rev["timestamp"], rev["editor"]), axis=1)
-        revs.index = rev_list.id
+        # PAST
+        rev_list = pd.DataFrame(self.ww.api.rev_ids_of_article(
+            self.article_name)["revisions"])
+
+        # revs = rev_list.apply(lambda rev: Revision(
+        #     rev["id"], rev["timestamp"], rev["editor"]), axis=1)
+        # revs.index = rev_list.id
+
+        # PRESENT
+        revs = self.get_revisions()
+
+        # FUTURE
+        # revs = self.get_revisions_dict()
 
         # Getting first revision object and adding content ot it
         from_rev_id = revs.index[0]
         self.wiki = Wiki(self.article_name, revs, all_tokens)
 
-        self.wiki.revisions.iloc[0].content = self.df_rev_content(
-            from_rev_id, first=True)
+        self.wiki.revisions.iloc[0].content = self.get_rev_content(
+            from_rev_id)
         # adding content to all other revision and finding change object
         # between them.
 
         for i, to_rev_id in enumerate(list(revs.index[1:])):
-            to_rev_content = self.df_rev_content(to_rev_id)
+            to_rev_content = self.get_rev_content(to_rev_id)
             self.wiki.create_change(
                 from_rev_id, to_rev_id, to_rev_content, self.epsilon_size)
             from_rev_id = to_rev_id
@@ -83,5 +115,3 @@ class Chobjer:
         change_dataframe_path = os.path.join(
             save_dir, f"{self.article_name}_change.h5")
         change_df.to_hdf(change_dataframe_path, key="data", mode='w')
-
-
