@@ -6,20 +6,20 @@ class Wiki:
     MAIN CLASS TO store all revisions for a wiki along with editors and timestamp.
     '''
 
-    def __init__(self, title, revs, all_tokens=[]):
+    def __init__(self, title, revs, tokens):
         #self.id = id
         self.title = title
         self.revisions = revs
-        self.add_all_token(all_tokens)
+        self.add_all_token(tokens)
 
-    def add_all_token(self, all_tokens):
-
-        for token in all_tokens:
-            self.revisions.loc[token["o_rev_id"]].added.add(token["token_id"])
-            for in_revision in token["in"]:
-                self.revisions.loc[in_revision].added.add(token["token_id"])
-            for out_revision in token["out"]:
-                self.revisions.loc[out_revision].removed.add(token["token_id"])
+    def add_all_token(self, tokens):
+        for token in tokens:
+            # token.str
+            self.revisions.loc[token.origin_rev_id].added.add(token.token_id)
+            for in_revision in token.inbound:
+                self.revisions.loc[in_revision].added.add(token.token_id)
+            for out_revision in token.outbound:
+                self.revisions.loc[out_revision].removed.add(token.token_id)
 
     def create_change(self, from_rev_id, to_rev_id, to_rev_content, epsilon_size):
         try:

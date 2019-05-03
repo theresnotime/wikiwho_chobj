@@ -5,6 +5,7 @@ from time import sleep
 import pandas as pd
 
 from WikiWho.utils import iter_rev_tokens
+from wikiwho import open_pickle
 
 from .wiki import Wiki
 from .revision import Revision
@@ -15,6 +16,8 @@ class Chobjer:
 
     def __init__(self, wikiwho, article_name, epsilon_size):
         self.ww = wikiwho
+        self.ww.api.ww = open_pickle(article_name, 
+            pickle_path=self.ww.api.pickle_path, lang=self.ww.api.lng)
         self.article_name = article_name
         self.epsilon_size = epsilon_size
 
@@ -49,35 +52,35 @@ class Chobjer:
 
     def create(self):
 
-        all_tokens = self.get_all_content()
+        with Timer():
 
-        # PAST
-        # rev_list = pd.DataFrame(self.ww.api.rev_ids_of_article(
-        #     self.article_name)["revisions"])
-        # revs = rev_list.apply(lambda rev: Revision(
-        #     rev["id"], rev["timestamp"], rev["editor"]), axis=1)
-        # revs.index = rev_list.id
+            # PAST
+            # rev_list = pd.DataFrame(self.ww.api.rev_ids_of_article(
+            #     self.article_name)["revisions"])
+            # revs = rev_list.apply(lambda rev: Revision(
+            #     rev["id"], rev["timestamp"], rev["editor"]), axis=1)
+            # revs.index = rev_list.id
 
-        # PRESENT
-        revs = self.get_revisions()
+            # PRESENT
+            revs = self.get_revisions()
 
-        # FUTURE
-        # revs = self.get_revisions_dict()
+            # FUTURE
+            # revs = self.get_revisions_dict()
 
-        # Getting first revision object and adding content ot it
-        from_rev_id = revs.index[0]
-        self.wiki = Wiki(self.article_name, revs, all_tokens)
+            # Getting first revision object and adding content ot it
+            from_rev_id = revs.index[0]
+            self.wiki = Wiki(self.article_name, revs, self.ww.api.ww.tokens)
 
-        self.wiki.revisions.iloc[0].content = self.get_rev_content(
-            from_rev_id)
-        # adding content to all other revision and finding change object
-        # between them.
+            self.wiki.revisions.iloc[0].content = self.get_rev_content(
+                from_rev_id)
 
-        for i, to_rev_id in enumerate(list(revs.index[1:])):
-            to_rev_content = self.get_rev_content(to_rev_id)
-            self.wiki.create_change(
-                from_rev_id, to_rev_id, to_rev_content, self.epsilon_size)
-            from_rev_id = to_rev_id
+            # adding content to all other revision and finding change object
+            # between them.
+            for i, to_rev_id in enumerate(list(revs.index[1:])):
+                to_rev_content = self.get_rev_content(to_rev_id)
+                self.wiki.create_change(
+                    from_rev_id, to_rev_id, to_rev_content, self.epsilon_size)
+                from_rev_id = to_rev_id
 
     def save(self, save_dir):
         save_filepath = os.path.join(
