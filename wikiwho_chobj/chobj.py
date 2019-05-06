@@ -66,7 +66,7 @@ class Chobjer:
                 from_rev_id, to_rev_id, to_rev_content, self.epsilon_size)
             from_rev_id = to_rev_id
 
-    def create_change_objects_per_rev(self):
+    def iter_chobjs(self):
 
         revs = self.get_revisions_dict()
         revs_iter = iter(revs.items())
@@ -82,10 +82,10 @@ class Chobjer:
         for to_rev_id, _ in revs_iter:
             # for i, to_rev_id in enumerate(list(revs.index[1:])):
             to_rev_content = self.get_rev_content(to_rev_id)
-            chobjs = self.wiki.get_chobjs(
-                from_rev_id, to_rev_id, to_rev_content, self.epsilon_size)           
-            if len(chobjs[-1]) > 0:
-                yield chobjs
+            for chobj in self.wiki.get_chobjs(
+                from_rev_id, to_rev_id, to_rev_content, self.epsilon_size):
+
+                yield chobj
             from_rev_id = to_rev_id
 
     def save(self, save_dir):

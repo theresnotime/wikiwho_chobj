@@ -1,3 +1,7 @@
+import os
+
+import pandas as pd
+
 from wikiwho_chobj import Chobjer
 
 from wikiwho_wrapper import WikiWho
@@ -14,11 +18,15 @@ if __name__ == "__main__":
     ww = WikiWho(pickle_path='pickles', lng='en')
     co = Chobjer(ww, 2161298, epsilon_size)
 
+    data = [chobj for chobj in co.iter_chobjs()]
+    df = pd.DataFrame(data, columns = data[0].keys())
 
-    #for chobjes in co.create_change_objects_per_rev():
-    #    import ipdb; ipdb.set_trace()  # breakpoint c193b2c2 //
+    change_dataframe_path = os.path.join(
+            change_object_dir, f"{co.article_name}_change_iter.h5")
+    df.to_hdf(change_dataframe_path, key="data", mode='w')
 
 
     co.create()
     co.save(change_object_dir)
     co.save_hd5(change_object_dir)
+

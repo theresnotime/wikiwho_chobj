@@ -59,5 +59,21 @@ class Wiki:
                   traceback.format_exc())
             print("problem in ", to_rev_content.keys())
 
-        return (from_rev.id, to_rev.id, to_rev.timestamp,
-                to_rev.timestamp - from_rev.timestamp, to_rev.editor, from_rev.change_df)
+        for _, chobj in from_rev.change_df.iterrows():
+
+            yield {
+                'from_rev': from_rev.id,
+                'to_rev': to_rev.id,
+                'timegap': to_rev.timestamp - from_rev.timestamp,
+                'editor': to_rev.editor,
+                'ins_start_pos': chobj['ins_start_pos'],
+                'ins_end_pos': chobj['ins_end_pos'],
+                'left_neigh': chobj['left_neigh'],
+                'right_neigh': chobj['right_neigh'],
+                'del_start_pos': chobj['del_start_pos'],
+                'del_end_pos': chobj['del_end_pos'],
+                'ins_tokens_str': chobj['ins_tokens_str'],
+                'del_tokens_str': chobj['del_tokens_str'],
+                'left_token_str': chobj['left_token_str'],
+                'right_token_str': chobj['right_token_str'],
+            }
