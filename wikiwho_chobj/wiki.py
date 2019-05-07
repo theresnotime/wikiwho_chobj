@@ -60,7 +60,6 @@ class Wiki:
             print("problem in ", to_rev_content.keys())
 
         for _, chobj in from_rev.change_df.iterrows():
-
             yield {
                 'page_id': self.article,
                 'from_rev': from_rev.id,
@@ -78,4 +77,8 @@ class Wiki:
                 'del_tokens_str': chobj['del_tokens_str'],
                 'left_token_str': chobj['left_token_str'],
                 'right_token_str': chobj['right_token_str'],
+                'text': (chobj['left_token_str'],
+                        chobj['ins_tokens_str'],
+                        chobj['del_tokens_str'],
+                        chobj['right_token_str']),
             }

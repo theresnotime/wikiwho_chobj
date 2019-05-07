@@ -55,6 +55,12 @@ class Revision:
         self.change = pd.merge(self.inserted_object, self.deleted_object, how="outer", on=[
                                "left_neigh", "right_neigh"])
         self.change.fillna(-1, inplace=True)
+        self.change["left_neigh"] = self.change["left_neigh"].astype(int)
+        self.change["right_neigh"] = self.change["right_neigh"].astype(int)
+        self.change["ins_start_pos"] = self.change["ins_start_pos"].astype(int)
+        self.change["ins_end_pos"] = self.change["ins_end_pos"].astype(int)
+        self.change["del_start_pos"] = self.change["del_start_pos"].astype(int)
+        self.change["del_end_pos"] = self.change["del_end_pos"].astype(int)
 
     def append_neighbour_vec(self, to_rev, epsilon_size):
         self.wiki_who_tokens = self.content.token_id.values
@@ -72,21 +78,21 @@ class Revision:
 
     def find_tokens(self, change, revision, to_rev, epsilon_size):
 
-        start_left = (int(change["left_neigh"]) - epsilon_size)
+        start_left = (change["left_neigh"] - epsilon_size)
         if start_left < 0:
             start_left = 0
-        left_neigh = slice(start_left, int(change["left_neigh"]) + 1)
+        left_neigh = slice(start_left, change["left_neigh"] + 1)
 
-        end_right = (int(change["right_neigh"]) + epsilon_size + 1)
+        end_right = (change["right_neigh"] + epsilon_size + 1)
         if end_right >= revision.wiki_who_tokens.size:
             end_right = revision.wiki_who_tokens.size - 1
-        right_neigh = slice(int(change["right_neigh"]), end_right)
+        right_neigh = slice(change["right_neigh"], end_right)
         if(change["ins_start_pos"] == -1):
             #ins_tokens = []
             ins_tokens_str = []
         else:
-            ins_slice = slice(int(change["ins_start_pos"]), int(
-                change["ins_end_pos"] + 1))
+            ins_slice = slice(change["ins_start_pos"], 
+                change["ins_end_pos"] + 1)
             #ins_tokens = to_rev.content.token_id.values[ins_slice]
             ins_tokens_str = to_rev.content.str.values[ins_slice]
 
@@ -94,8 +100,8 @@ class Revision:
             #del_tokens = []
             del_tokens_str = []
         else:
-            del_slice = slice(int(change["del_start_pos"]), int(
-                change["del_end_pos"] + 1))
+            del_slice = slice(change["del_start_pos"], 
+                change["del_end_pos"] + 1)
             #del_tokens = revision.wiki_who_tokens[del_slice]
             del_tokens_str = revision.wiki_who_tokens_str[del_slice]
 
