@@ -6,9 +6,9 @@ class Wiki:
     MAIN CLASS TO store all revisions for a wiki along with editors and timestamp.
     '''
 
-    def __init__(self, title, revs, tokens):
+    def __init__(self, article, revs, tokens):
         #self.id = id
-        self.title = title
+        self.article = article
         self.revisions = revs
         self.add_all_token(tokens)
 
@@ -62,9 +62,11 @@ class Wiki:
         for _, chobj in from_rev.change_df.iterrows():
 
             yield {
+                'page_id': self.article,
                 'from_rev': from_rev.id,
                 'to_rev': to_rev.id,
-                'timegap': to_rev.timestamp - from_rev.timestamp,
+                'from_timestamp': to_rev.timestamp,
+                'to_timestamp': from_rev.timestamp,
                 'editor': to_rev.editor,
                 'ins_start_pos': chobj['ins_start_pos'],
                 'ins_end_pos': chobj['ins_end_pos'],

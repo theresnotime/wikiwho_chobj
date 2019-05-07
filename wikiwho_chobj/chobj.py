@@ -15,31 +15,29 @@ from .utils import Timer
 
 class Chobjer:
 
-    def __init__(self, wikiwho, article_name, epsilon_size):
-        self.ww = wikiwho
-        self.ww.api.ww = open_pickle(article_name,
-                                     pickle_path=self.ww.api.pickle_path, lang=self.ww.api.lng)
-        self.article_name = article_name
+    def __init__(self, article, pickle_path, lng, epsilon_size):
+        self.ww_pickle = open_pickle(article, pickle_path=pickle_path, lang=lng)
+        self.article = article
         self.epsilon_size = epsilon_size
 
     def get_revisions(self):
-        revisions = self.ww.api.ww.revisions
+        revisions = self.ww_pickle.revisions
         return pd.DataFrame.from_records(((rev_id, Revision(rev_id, revisions[rev_id].timestamp,
-                                                            revisions[rev_id].editor)) for rev_id in self.ww.api.ww.ordered_revisions),
+                                                            revisions[rev_id].editor)) for rev_id in self.ww_pickle.ordered_revisions),
                                          columns=['id', ''], index='id').iloc[:, 0]
 
     def get_revisions_dict(self):
-        revisions = self.ww.api.ww.revisions
+        revisions = self.ww_pickle.revisions
         return {rev_id: Revision(
             rev_id,
             datetime.datetime.strptime(
                 revisions[rev_id].timestamp, r'%Y-%m-%dT%H:%M:%SZ'),
             # revisions[rev_id].timestamp,
-            revisions[rev_id].editor) for rev_id in self.ww.api.ww.ordered_revisions}
+            revisions[rev_id].editor) for rev_id in self.ww_pickle.ordered_revisions}
 
     def __iter_rev_content(self, rev_id):
         yield ('{st@rt}', -1)
-        for word in iter_rev_tokens(self.ww.api.ww.revisions[rev_id]):
+        for word in iter_rev_tokens(self.ww_pickle.revisions[rev_id]):
             yield (word.value, word.token_id)
         yield ('{$nd}', -2)
 
@@ -54,7 +52,7 @@ class Chobjer:
         first_rev.content = self.get_rev_content(from_rev_id)
 
         # Getting first revision object and adding content ot it
-        self.wiki = Wiki(self.article_name, revs, self.ww.api.ww.tokens)
+        self.wiki = Wiki(self.article, revs, self.ww_pickle.tokens)
 
         # adding content to all other revision and finding change object
         # between them.
@@ -75,7 +73,7 @@ class Chobjer:
         first_rev.content = self.get_rev_content(from_rev_id)
 
         # Getting first revision object and adding content ot it
-        self.wiki = Wiki(self.article_name, revs, self.ww.api.ww.tokens)
+        self.wiki = Wiki(self.article, revs, self.ww_pickle.tokens)
 
         # adding content to all other revision and finding change object
         # between them.
@@ -83,14 +81,14 @@ class Chobjer:
             # for i, to_rev_id in enumerate(list(revs.index[1:])):
             to_rev_content = self.get_rev_content(to_rev_id)
             for chobj in self.wiki.get_chobjs(
-                from_rev_id, to_rev_id, to_rev_content, self.epsilon_size):
+                    from_rev_id, to_rev_id, to_rev_content, self.epsilon_size):
 
                 yield chobj
             from_rev_id = to_rev_id
 
     def save(self, save_dir):
         save_filepath = os.path.join(
-            save_dir, f"{self.article_name}_change.pkl")
+            save_dir, f"{self.article}_change.pkl")
         with open(save_filepath, "wb") as file:
             pickle.dump(self.wiki, file)
 
@@ -120,5 +118,5 @@ class Chobjer:
                               "from revision id", "to revision id", "timestamp", "timegap", "editor"])
 
         change_dataframe_path = os.path.join(
-            save_dir, f"{self.article_name}_change.h5")
+            save_dir, f"{self.article}_change.h5")
         change_df.to_hdf(change_dataframe_path, key="data", mode='w')
