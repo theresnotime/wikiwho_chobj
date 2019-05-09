@@ -1,11 +1,14 @@
+[![Binder](https://notebooks.gesis.org/binder/badge_logo.svg)](https://notebooks.gesis.org/binder/v2/gh/gesiscss/wikiwho_chobj/master?filepath=example.ipynb)
+
 # wikiwho_chobj
 
 Creates change objects based on WikiWho. A change object represent a contigous edition in Wikipedia that occurred between two consecutive revision. It contains the inserted and deleted tokens, as well as the left and right context in which the changes ocurred. 
 
 It also contains the revisions, timestamps and editor of the change, as well as the positions of the change in the respective revision
 
-# How to use it?
+You can see a demo here: [![Binder](https://notebooks.gesis.org/binder/badge_logo.svg)](https://notebooks.gesis.org/binder/v2/gh/gesiscss/wikiwho_chobj/master?filepath=example.ipynb)
 
+# How to use it?
 
 1. Create a Chobjer object using the id of the Wikipedia article. The *Bioglass* article (`id = 2161298`) is provided in the Github repository as an example. If you need other articles please [contact us](https://api.wikiwho.net/contact/).
 
