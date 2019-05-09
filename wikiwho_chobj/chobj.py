@@ -15,10 +15,10 @@ from .utils import Timer
 
 class Chobjer:
 
-    def __init__(self, article, pickle_path, lng, epsilon_size):
-        self.ww_pickle = open_pickle(article, pickle_path=pickle_path, lang=lng)
+    def __init__(self, article, pickles_path, lang, context):
+        self.ww_pickle = open_pickle(article, pickle_path=pickles_path, lang=lang)
         self.article = article
-        self.epsilon_size = epsilon_size
+        self.context = context
 
     def get_revisions(self):
         revisions = self.ww_pickle.revisions
@@ -61,7 +61,7 @@ class Chobjer:
             to_rev_content = self.get_rev_content(to_rev_id)
 
             self.wiki.create_change(
-                from_rev_id, to_rev_id, to_rev_content, self.epsilon_size)
+                from_rev_id, to_rev_id, to_rev_content, self.context)
             from_rev_id = to_rev_id
 
     def iter_chobjs(self):
@@ -81,7 +81,7 @@ class Chobjer:
             # for i, to_rev_id in enumerate(list(revs.index[1:])):
             to_rev_content = self.get_rev_content(to_rev_id)
             for chobj in self.wiki.get_chobjs(
-                    from_rev_id, to_rev_id, to_rev_content, self.epsilon_size):
+                    from_rev_id, to_rev_id, to_rev_content, self.context):
 
                 yield chobj
             from_rev_id = to_rev_id
