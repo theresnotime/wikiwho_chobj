@@ -110,10 +110,10 @@ class Revision:
         left_token_str = revision.wiki_who_tokens_str[left_neigh]
         right_token_str = revision.wiki_who_tokens_str[right_neigh]
         return pd.Series([
-            tuple(ins_tokens), tuple(del_tokens),
+            ins_tokens.tolist(), del_tokens.tolist(),
             tuple(ins_tokens_str), tuple(del_tokens_str),
             left_neigh, right_neigh,
-            tuple(left_token), tuple(right_token),
+            left_token.tolist(), right_token.tolist(),
             tuple(left_token_str), tuple(right_token_str)])
 
     # def find_tokens(self, change, revision, to_rev, epsilon_size):
