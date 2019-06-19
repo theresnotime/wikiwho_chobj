@@ -93,7 +93,7 @@ class Revision:
         else:
             ins_slice = slice(change["ins_start_pos"], 
                 change["ins_end_pos"] + 1)
-            ins_tokens = to_rev.content.token_id.values[ins_slice]
+            ins_tokens = to_rev.content.token_id.values[ins_slice].tolist()
             ins_tokens_str = to_rev.content.str.values[ins_slice]
 
         if(change["del_start_pos"] == -1):
@@ -102,18 +102,18 @@ class Revision:
         else:
             del_slice = slice(change["del_start_pos"], 
                 change["del_end_pos"] + 1)
-            del_tokens = revision.wiki_who_tokens[del_slice]
+            del_tokens = revision.wiki_who_tokens[del_slice].tolist()
             del_tokens_str = revision.wiki_who_tokens_str[del_slice]
 
-        left_token = revision.wiki_who_tokens[left_neigh]
-        right_token = revision.wiki_who_tokens[right_neigh]
+        left_token = revision.wiki_who_tokens[left_neigh].tolist()
+        right_token = revision.wiki_who_tokens[right_neigh].tolist()
         left_token_str = revision.wiki_who_tokens_str[left_neigh]
         right_token_str = revision.wiki_who_tokens_str[right_neigh]
         return pd.Series([
-            ins_tokens.tolist(), del_tokens.tolist(),
+            ins_tokens, del_tokens,
             tuple(ins_tokens_str), tuple(del_tokens_str),
             left_neigh, right_neigh,
-            left_token.tolist(), right_token.tolist(),
+            left_token, right_token,
             tuple(left_token_str), tuple(right_token_str)])
 
     # def find_tokens(self, change, revision, to_rev, epsilon_size):
