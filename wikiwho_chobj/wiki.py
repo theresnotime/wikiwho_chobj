@@ -15,22 +15,17 @@ class Wiki:
     def add_all_token(self, tokens):
         for token in tokens:
             # token.str
-            self.revisions[token.origin_rev_id].added.add(token.token_id)
+            self.revisions[token.origin_rev_id].added.append(token.token_id)
             for in_revision in token.inbound:
-                self.revisions[in_revision].added.add(token.token_id)
+                self.revisions[in_revision].added.append(token.token_id)
             for out_revision in token.outbound:
-                self.revisions[out_revision].removed.add(token.token_id)
+                self.revisions[out_revision].removed.append(token.token_id)
 
-    def create_change(self, from_rev_id, to_rev_id, to_rev_content, epsilon_size):
+    def create_change(self, from_rev, to_rev, epsilon_size):
         try:
-            from_rev = self.revisions[from_rev_id]
-            to_rev = self.revisions[to_rev_id]
 
-            to_rev.from_id = from_rev.id
-            from_rev.to_id = to_rev.id
 
             from_rev.deleted(to_rev)
-            to_rev.content = to_rev_content
             to_rev.inserted_continuous_pos()
             to_rev.inserted_neighbours()
             from_rev.create_change_object(to_rev)
@@ -38,18 +33,11 @@ class Wiki:
         except:
             print("exception occurred in calculating change object",
                   traceback.format_exc())
-            print("problem in ", to_rev_content.keys())
+            #print("problem in ", to_rev_content.keys())
 
-    def get_chobjs(self, from_rev_id, to_rev_id, to_rev_content, epsilon_size):
+    def get_chobjs(self, from_rev, to_rev, epsilon_size):
         try:
-            from_rev = self.revisions[from_rev_id]
-            to_rev = self.revisions[to_rev_id]
-
-            to_rev.from_id = from_rev.id
-            from_rev.to_id = to_rev.id
-
             from_rev.deleted(to_rev)
-            to_rev.content = to_rev_content
             to_rev.inserted_continuous_pos()
             to_rev.inserted_neighbours()
             from_rev.create_change_object(to_rev)
@@ -57,7 +45,7 @@ class Wiki:
         except:
             print("exception occurred in calculating change object",
                   traceback.format_exc())
-            print("problem in ", to_rev_content.keys())
+            #print("problem in ", to_rev_content.keys())
 
         for _, chobj in from_rev.change_df.iterrows():
             yield {

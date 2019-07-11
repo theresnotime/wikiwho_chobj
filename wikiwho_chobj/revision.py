@@ -14,46 +14,122 @@ class Revision:
         self.id = id
         self.timestamp = timestamp
         self.editor = editor
-        self.added = set()
-        self.removed = set()
+        self.added = list()
+        self.removed = list()
 
     def deleted(self, to_rev):
-        self.content["removed"] = pd.Series(np.isin(
-            self.content["token_id"].values, list(to_rev.removed), assume_unique=True))
-        end_pos = np.argwhere(np.ediff1d(np.pad(self.content["removed"].astype(
-            np.int), (1, 1), mode="constant", constant_values=0)) == -1) - 1
-        start_pos = np.argwhere(np.ediff1d(np.pad(self.content["removed"].astype(
-            np.int), (1, 1), mode="constant", constant_values=0)) == 1)
+        removed = np.isin(self.tokens,
+                          to_rev.removed, assume_unique=True).astype(np.int)
+        ediff = np.ediff1d(
+            np.pad(removed, (1, 1), mode="constant", constant_values=0))
+
+        start_pos = np.argwhere(ediff == 1)
+        end_pos = np.argwhere(ediff == -1) - 1
         start_neighbour = start_pos - 1
         end_neighbour = end_pos + 1
+
+        self.del_start_pos = np.nonzero(ediff == 1)[0]
+        self.del_end_pos = np.nonzero(ediff == -1)[0] - 1
+        self.del_start_neighbour = self.del_start_pos - 1
+        self.del_end_neighbour = self.del_end_pos + 1
+
         self.deleted_object = pd.DataFrame(np.c_[start_pos, end_pos, start_neighbour, end_neighbour],
                                            columns=["del_start_pos", "del_end_pos", "left_neigh", "right_neigh", ])
 
     def inserted_continuous_pos(self):
-        self.content["added"] = pd.Series(
-            np.isin(self.content["token_id"].values, list(self.added), assume_unique=True))
-        end_pos = np.argwhere(np.ediff1d(np.pad(self.content["added"].astype(
-            np.int), (1, 1), mode="constant", constant_values=0)) == -1) - 1
-        start_pos = np.argwhere(np.ediff1d(np.pad(self.content["added"].astype(
-            np.int), (1, 1), mode="constant", constant_values=0)) == 1)
+
+        added = np.isin(self.tokens, self.added,
+                        assume_unique=True).astype(np.int)
+
+        ediff = np.ediff1d(
+            np.pad(added, (1, 1), mode="constant", constant_values=0))
+
+        start_pos = np.argwhere(ediff == 1)
+        end_pos = np.argwhere(ediff == -1) - 1
+
+        self.ins_start_pos = np.nonzero(ediff == 1)[0]
+        self.ins_end_pos = np.nonzero(ediff == -1)[0] - 1
+
         self.added_pos = np.c_[start_pos, end_pos]
 
     def inserted_neighbours(self):
         start_token_pos = self.added_pos[:, 0] - 1
         end_token_pos = self.added_pos[:, 1] + 1
-        self.start_token_id = self.content["token_id"].values[start_token_pos]
-        self.end_token_id = self.content["token_id"].values[end_token_pos]
+        self.start_token_id = self.tokens[start_token_pos]
+        self.end_token_id = self.tokens[end_token_pos]
 
     def create_change_object(self, to_rev):
-        self.ins_left = np.argwhere(np.isin(
-            self.content.token_id.values, to_rev.start_token_id, assume_unique=True))
+        self.ins_left = np.argwhere(
+            np.isin(self.tokens, to_rev.start_token_id, assume_unique=True))
         self.ins_right = np.argwhere(
-            np.isin(self.content.token_id.values, to_rev.end_token_id, assume_unique=True))
+            np.isin(self.tokens, to_rev.end_token_id, assume_unique=True))
+
+        self.ins_left_neigh = np.nonzero(
+            np.isin(self.tokens, to_rev.start_token_id, assume_unique=True))[0]
+        self.ins_right_neigh = np.nonzero(
+            np.isin(self.tokens, to_rev.end_token_id, assume_unique=True))[0]
+
         self.inserted_object = pd.DataFrame(np.concatenate([to_rev.added_pos, self.ins_left, self.ins_right], axis=1),
                                             columns=["ins_start_pos", "ins_end_pos", "left_neigh", "right_neigh"])
 
         self.change = pd.merge(self.inserted_object, self.deleted_object, how="outer", on=[
                                "left_neigh", "right_neigh"])
+
+
+        # asdf = []
+        # for isp, iep, iln, irn in zip(*self.inserted_object.values.transpose()):
+        #     for dsp, dep, dln, drn in zip(*self.deleted_object.values.transpose()):
+        #         asdf.append('')
+
+
+        # if len(self.change) > 2 and len(self.change) < 10:
+        #     if not (np.diff(self.inserted_object['left_neigh']) > 0).all():
+        #         print('err')
+
+        #     didx = 0
+
+        ####################################################
+
+        # self.ins_start_pos
+        # self.ins_end_pos
+        # self.ins_left_neigh
+        # self.ins_right_neigh
+
+        # self.del_start_pos
+        # self.del_end_pos
+        # self.del_start_neighbour
+        # self.del_end_neighbour
+
+        ####################################
+
+        ####################################
+
+        # iidx = 0
+        # while True:
+        #     if self.inserted_object['left_neigh'].iloc[iidx] ==
+
+        # didx = 0
+        # for isp, iep, iln, irn in zip(*self.inserted_object.values.transpose()):
+        # for dsp, dep, dln, drn in
+        # zip(*self.deleted_object.values.transpose()):
+
+        # for isp, iep, iln, irn in
+        # zip(*self.inserted_object.values.transpose()):
+
+        #         if iln
+
+        #cols = list(set(self.inserted_object.values.dtype.names).intersection(self.deleted_object.values.dtype.names))
+        #result = recfunctions.join_by(cols, self.inserted_object, self.deleted_object, jointype='outer')
+        # import ipdb; ipdb.set_trace()  # breakpoint 675a27f4 //
+
+        # if len(self.change) > 0:
+        #     import numpy.lib.recfunctions as recfunctions
+        #     import ipdb; ipdb.set_trace()  # breakpoint 3a322cf2 //
+
+        #     cols = list(set(self.inserted_object.values.dtype.names).intersection(self.deleted_object.values.dtype.names))
+        #     result = recfunctions.join_by(cols, self.inserted_object, self.deleted_object, jointype='outer')
+        #     import ipdb; ipdb.set_trace()  # breakpoint 675a27f4 //
+
         self.change.fillna(-1, inplace=True)
         self.change["left_neigh"] = self.change["left_neigh"].astype(int)
         self.change["right_neigh"] = self.change["right_neigh"].astype(int)
@@ -63,9 +139,11 @@ class Revision:
         self.change["del_end_pos"] = self.change["del_end_pos"].astype(int)
 
     def append_neighbour_vec(self, to_rev, epsilon_size):
-        self.wiki_who_tokens = self.content.token_id.values
-        self.wiki_who_tokens_str = self.content.str.values
-        del self.content
+        self.wiki_who_tokens = self.tokens
+        self.wiki_who_tokens_str = self.values
+        del self.values
+        del self.tokens
+
         neighbour_df = self.change.apply(
             self.find_tokens, axis=1, args=(self, to_rev, epsilon_size))
 
@@ -91,17 +169,17 @@ class Revision:
             ins_tokens = []
             ins_tokens_str = []
         else:
-            ins_slice = slice(change["ins_start_pos"], 
-                change["ins_end_pos"] + 1)
-            ins_tokens = to_rev.content.token_id.values[ins_slice].tolist()
-            ins_tokens_str = to_rev.content.str.values[ins_slice]
+            ins_slice = slice(change["ins_start_pos"],
+                              change["ins_end_pos"] + 1)
+            ins_tokens = to_rev.tokens[ins_slice].tolist()
+            ins_tokens_str = to_rev.values[ins_slice]
 
         if(change["del_start_pos"] == -1):
             del_tokens = []
             del_tokens_str = []
         else:
-            del_slice = slice(change["del_start_pos"], 
-                change["del_end_pos"] + 1)
+            del_slice = slice(change["del_start_pos"],
+                              change["del_end_pos"] + 1)
             del_tokens = revision.wiki_who_tokens[del_slice].tolist()
             del_tokens_str = revision.wiki_who_tokens_str[del_slice]
 
@@ -131,7 +209,7 @@ class Revision:
     #     else:
     #         ins_slice = slice(int(change["ins_start_pos"]), int(
     #             change["ins_end_pos"] + 1))
-    #         ins_tokens = to_rev.content.token_id.values[ins_slice]
+    #         ins_tokens = to_rev.tokens[ins_slice]
     #     if(change["del_start_pos"] == -1):
     #         del_tokens = []
     #     else:
