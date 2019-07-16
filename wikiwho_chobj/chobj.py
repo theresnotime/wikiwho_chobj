@@ -127,7 +127,11 @@ class Chobjer:
             #to_rev_content = self.get_rev_content(to_rev_id)
             for chobj in self.wiki.get_chobjs(from_rev, to_rev, self.context):
                 yield chobj
+
             from_rev_id = to_rev_id
+
+
+
 
     def save(self, save_dir):
         save_filepath = os.path.join(

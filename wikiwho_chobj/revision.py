@@ -17,6 +17,8 @@ class Revision:
         self.added = list()
         self.removed = list()
 
+
+
     def deleted(self, to_rev):
         removed = np.isin(self.tokens,
                           to_rev.removed, assume_unique=True).astype(np.int)
@@ -30,8 +32,8 @@ class Revision:
 
         self.del_start_pos = np.nonzero(ediff == 1)[0]
         self.del_end_pos = np.nonzero(ediff == -1)[0] - 1
-        self.del_start_neighbour = self.del_start_pos - 1
-        self.del_end_neighbour = self.del_end_pos + 1
+        self.del_left_neigh = self.del_start_pos - 1
+        self.del_right_neigh = self.del_end_pos + 1
 
         self.deleted_object = pd.DataFrame(np.c_[start_pos, end_pos, start_neighbour, end_neighbour],
                                            columns=["del_start_pos", "del_end_pos", "left_neigh", "right_neigh", ])
@@ -74,6 +76,94 @@ class Revision:
 
         self.change = pd.merge(self.inserted_object, self.deleted_object, how="outer", on=[
                                "left_neigh", "right_neigh"])
+
+
+        self.change.fillna(-1, inplace=True)
+        self.change["left_neigh"] = self.change["left_neigh"].astype(int)
+        self.change["right_neigh"] = self.change["right_neigh"].astype(int)
+        self.change["ins_start_pos"] = self.change["ins_start_pos"].astype(int)
+        self.change["ins_end_pos"] = self.change["ins_end_pos"].astype(int)
+        self.change["del_start_pos"] = self.change["del_start_pos"].astype(int)
+        self.change["del_end_pos"] = self.change["del_end_pos"].astype(int)
+
+
+
+        did = 0
+        iid = 0
+
+
+        chdata = []
+        if len(self.change) > 1:
+
+            while iid < len(self.ins_left_neigh) and did < len(self.del_left_neigh):
+
+                if (self.ins_left_neigh[iid] == self.del_left_neigh[did] and 
+                    self.ins_right_neigh[iid] == self.del_right_neigh[did]): 
+                    chdata.append((
+                        to_rev.ins_start_pos[iid],
+                        to_rev.ins_end_pos[iid],
+                        self.ins_left_neigh[iid],
+                        self.ins_right_neigh[iid],
+                        self.del_start_pos[did],
+                        self.del_end_pos[did]
+                    ))
+                    did += 1
+                    iid += 1
+                elif (self.ins_left_neigh[iid] <= self.del_left_neigh[did]): 
+
+                    chdata.append((
+                        to_rev.ins_start_pos[iid],
+                        to_rev.ins_end_pos[iid],
+                        self.ins_left_neigh[iid],
+                        self.ins_right_neigh[iid],
+                        -1,
+                        -1
+                     ))
+                    iid += 1
+                elif (self.ins_left_neigh[iid] > self.del_left_neigh[did] ): 
+                    chdata.append((
+                        -1,
+                        -1,
+                        self.del_left_neigh[did],
+                        self.del_right_neigh[did],
+                        self.del_start_pos[did],
+                        self.del_end_pos[did]
+                     ))
+                    did += 1
+
+            while iid < len(self.ins_left_neigh):
+                chdata.append((
+                    to_rev.ins_start_pos[iid],
+                    to_rev.ins_end_pos[iid],
+                    self.ins_left_neigh[iid],
+                    self.ins_right_neigh[iid],
+                    -1,
+                    -1
+                 ))
+                iid += 1
+
+            while did < len(self.del_left_neigh):
+                chdata.append((
+                    -1,
+                    -1,
+                    self.del_left_neigh[did],
+                    self.del_right_neigh[did],
+                    self.del_start_pos[did],
+                    self.del_end_pos[did]
+                 ))
+                did += 1
+
+            df = pd.DataFrame(chdata, columns =['ins_start_pos', 'ins_end_pos', 
+                'left_neigh', 'right_neigh', 'del_start_pos', 'del_end_pos']).sort_values(
+                    ['left_neigh', 'right_neigh']).reset_index(drop=True)
+            df2 = self.change[['ins_start_pos', 'ins_end_pos', 
+                'left_neigh', 'right_neigh', 'del_start_pos', 'del_end_pos']].sort_values(
+                    ['left_neigh', 'right_neigh']).reset_index(drop=True)
+            if not df.equals(df2):
+                import ipdb; ipdb.set_trace()  # breakpoint 24998c15 //
+
+
+
 
 
         # asdf = []
@@ -130,13 +220,7 @@ class Revision:
         #     result = recfunctions.join_by(cols, self.inserted_object, self.deleted_object, jointype='outer')
         #     import ipdb; ipdb.set_trace()  # breakpoint 675a27f4 //
 
-        self.change.fillna(-1, inplace=True)
-        self.change["left_neigh"] = self.change["left_neigh"].astype(int)
-        self.change["right_neigh"] = self.change["right_neigh"].astype(int)
-        self.change["ins_start_pos"] = self.change["ins_start_pos"].astype(int)
-        self.change["ins_end_pos"] = self.change["ins_end_pos"].astype(int)
-        self.change["del_start_pos"] = self.change["del_start_pos"].astype(int)
-        self.change["del_end_pos"] = self.change["del_end_pos"].astype(int)
+
 
     def append_neighbour_vec(self, to_rev, epsilon_size):
         self.wiki_who_tokens = self.tokens
