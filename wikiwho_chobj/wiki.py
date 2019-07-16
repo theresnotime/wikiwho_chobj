@@ -23,13 +23,8 @@ class Wiki:
 
     def create_change(self, from_rev, to_rev, epsilon_size):
         try:
-
-
-            from_rev.deleted(to_rev)
             to_rev.inserted_continuous_pos()
-            to_rev.inserted_neighbours()
-            from_rev.create_change_object(to_rev)
-            from_rev.append_neighbour_vec(to_rev, epsilon_size)
+            from_rev.create_change_object(to_rev, epsilon_size)
         except:
             print("exception occurred in calculating change object",
                   traceback.format_exc())
@@ -37,11 +32,8 @@ class Wiki:
 
     def get_chobjs(self, from_rev, to_rev, epsilon_size):
         try:
-            from_rev.deleted(to_rev)
             to_rev.inserted_continuous_pos()
-            to_rev.inserted_neighbours()
-            from_rev.create_change_object(to_rev)
-            from_rev.append_neighbour_vec(to_rev, epsilon_size)
+            from_rev.create_change_object(to_rev, epsilon_size)
         except:
             print("exception occurred in calculating change object",
                   traceback.format_exc())
