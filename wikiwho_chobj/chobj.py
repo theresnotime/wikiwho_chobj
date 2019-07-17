@@ -8,7 +8,6 @@ import numpy as np
 from WikiWho.utils import iter_rev_tokens
 from wikiwho import open_pickle
 
-from .wiki import Wiki
 from .revision import Revision
 from .utils import Timer
 
@@ -57,6 +56,17 @@ class Chobjer:
     def get_rev_content(self, rev_id):
         return pd.DataFrame(self.__iter_rev_content(rev_id), columns=['str', 'token_id'])
 
+
+    def add_all_token(self, revisions, tokens):
+        for token in tokens:
+            # token.str
+            revisions[token.origin_rev_id].added.append(token.token_id)
+            for in_revision in token.inbound:
+                revisions[in_revision].added.append(token.token_id)
+            for out_revision in token.outbound:
+                revisions[out_revision].removed.append(token.token_id)
+
+
     def iter_chobjs(self):
 
         revs = self.get_revisions_dict()
@@ -68,16 +78,15 @@ class Chobjer:
             [i for i in self.__get_token_ids(from_rev_id)])
         first_rev.values = np.array(
             [i for i in self.__get_values(from_rev_id)])
-        #first_rev.content = self.get_rev_content(from_rev_id)
 
         # Getting first revision object and adding content ot it
-        self.wiki = Wiki(self.article, revs, self.ww_pickle.tokens)
+        self.add_all_token(revs, self.ww_pickle.tokens)
 
         # adding content to all other revision and finding change object
         # between them.
         for to_rev_id, _ in revs_iter:
-            from_rev = self.wiki.revisions[from_rev_id]
-            to_rev = self.wiki.revisions[to_rev_id]
+            from_rev = revs[from_rev_id]
+            to_rev = revs[to_rev_id]
 
             to_rev.from_id = from_rev.id
             from_rev.to_id = to_rev.id
@@ -86,14 +95,13 @@ class Chobjer:
                 [i for i in self.__get_token_ids(to_rev_id)])
             to_rev.values = np.array([i for i in self.__get_values(to_rev_id)])
 
-            # for i, to_rev_id in enumerate(list(revs.index[1:])):
-            #to_rev_content = self.get_rev_content(to_rev_id)
-
             to_rev.inserted_continuous_pos()
             for chobj in from_rev.iter_chobs(self.article, to_rev, self.context):
                 yield chobj
 
             from_rev_id = to_rev_id
+
+        self.revs = revs
 
     def save(self, save_dir):
         save_filepath = os.path.join(
