@@ -3,7 +3,6 @@ import pickle
 import datetime
 from time import sleep
 
-import pandas as pd
 import numpy as np
 
 from WikiWho.utils import iter_rev_tokens
@@ -17,7 +16,8 @@ from .utils import Timer
 class Chobjer:
 
     def __init__(self, article, pickles_path, lang, context):
-        self.ww_pickle = open_pickle(article, pickle_path=pickles_path, lang=lang)
+        self.ww_pickle = open_pickle(
+            article, pickle_path=pickles_path, lang=lang)
         self.article = article
         self.context = context
 
@@ -55,47 +55,7 @@ class Chobjer:
         yield '{$nd}'
 
     def get_rev_content(self, rev_id):
-        # from .utils import Timer
-        # print('x')
-        # with Timer():
-        #     tokens = np.array([i for i in self.__get_token_ids(rev_id)])
-        #     values = np.array([i for i in self.__get_values(rev_id)])
-        # with Timer():
-        #     df = pd.DataFrame(self.__iter_rev_content(rev_id), columns=['str', 'token_id'])
-
-         return pd.DataFrame(self.__iter_rev_content(rev_id), columns=['str', 'token_id'])
-
-    def create(self):
-
-        revs = self.get_revisions_dict()
-        revs_iter = iter(revs.items())
-        from_rev_id, first_rev = next(revs_iter)
-
-        first_rev.tokens = np.array([i for i in self.__get_token_ids(from_rev_id)])
-        first_rev.values  = np.array([i for i in self.__get_values(from_rev_id)])
-
-        #first_rev.content = self.get_rev_content(from_rev_id)
-
-        # Getting first revision object and adding content ot it
-        self.wiki = Wiki(self.article, revs, self.ww_pickle.tokens)
-
-        # adding content to all other revision and finding change object
-        # between them.
-        for to_rev_id, _ in revs_iter:
-            # for i, to_rev_id in enumerate(list(revs.index[1:])):
-            #to_rev_content = self.get_rev_content(to_rev_id)
-
-            from_rev = self.wiki.revisions[from_rev_id]
-            to_rev = self.wiki.revisions[to_rev_id]
-
-            to_rev.from_id = from_rev.id
-            from_rev.to_id = to_rev.id
-
-            to_rev.tokens = np.array([i for i in self.__get_token_ids(to_rev_id)])
-            to_rev.values  = np.array([i for i in self.__get_values(to_rev_id)])
-
-            self.wiki.create_change(from_rev, to_rev, self.context)
-            from_rev_id = to_rev_id
+        return pd.DataFrame(self.__iter_rev_content(rev_id), columns=['str', 'token_id'])
 
     def iter_chobjs(self):
 
@@ -104,8 +64,10 @@ class Chobjer:
         from_rev_id, first_rev = next(revs_iter)
         first_rev.from_id = None
 
-        first_rev.tokens = np.array([i for i in self.__get_token_ids(from_rev_id)])
-        first_rev.values  = np.array([i for i in self.__get_values(from_rev_id)])
+        first_rev.tokens = np.array(
+            [i for i in self.__get_token_ids(from_rev_id)])
+        first_rev.values = np.array(
+            [i for i in self.__get_values(from_rev_id)])
         #first_rev.content = self.get_rev_content(from_rev_id)
 
         # Getting first revision object and adding content ot it
@@ -120,42 +82,9 @@ class Chobjer:
             to_rev.from_id = from_rev.id
             from_rev.to_id = to_rev.id
 
-            to_rev.tokens = np.array([i for i in self.__get_token_ids(to_rev_id)])
-            to_rev.values  = np.array([i for i in self.__get_values(to_rev_id)])
-
-            # for i, to_rev_id in enumerate(list(revs.index[1:])):
-            #to_rev_content = self.get_rev_content(to_rev_id)
-            for chobj in self.wiki.get_chobjs(from_rev, to_rev, self.context):
-                yield chobj
-
-            from_rev_id = to_rev_id
-
-
-    def iter_chobjs2(self):
-
-        revs = self.get_revisions_dict()
-        revs_iter = iter(revs.items())
-        from_rev_id, first_rev = next(revs_iter)
-        first_rev.from_id = None
-
-        first_rev.tokens = np.array([i for i in self.__get_token_ids(from_rev_id)])
-        first_rev.values  = np.array([i for i in self.__get_values(from_rev_id)])
-        #first_rev.content = self.get_rev_content(from_rev_id)
-
-        # Getting first revision object and adding content ot it
-        self.wiki = Wiki(self.article, revs, self.ww_pickle.tokens)
-
-        # adding content to all other revision and finding change object
-        # between them.
-        for to_rev_id, _ in revs_iter:
-            from_rev = self.wiki.revisions[from_rev_id]
-            to_rev = self.wiki.revisions[to_rev_id]
-
-            to_rev.from_id = from_rev.id
-            from_rev.to_id = to_rev.id
-
-            to_rev.tokens = np.array([i for i in self.__get_token_ids(to_rev_id)])
-            to_rev.values  = np.array([i for i in self.__get_values(to_rev_id)])
+            to_rev.tokens = np.array(
+                [i for i in self.__get_token_ids(to_rev_id)])
+            to_rev.values = np.array([i for i in self.__get_values(to_rev_id)])
 
             # for i, to_rev_id in enumerate(list(revs.index[1:])):
             #to_rev_content = self.get_rev_content(to_rev_id)
@@ -165,8 +94,6 @@ class Chobjer:
                 yield chobj
 
             from_rev_id = to_rev_id
-
-
 
     def save(self, save_dir):
         save_filepath = os.path.join(

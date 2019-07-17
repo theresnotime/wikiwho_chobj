@@ -31,22 +31,6 @@ if __name__ == "__main__":
         print(len(chobs1))
 
 
-        co = Chobjer(article=_id, pickles_path='pickles', lang='en', context=4)
-        with Timer():
-            chobs2 = [x for x in co.iter_chobjs2()]
-        print(len(chobs2))
-
-        import pandas as pd
-        df1 = pd.DataFrame(chobs1)
-        df2 = pd.DataFrame(chobs2)
-
-        if not df1.equals(df2):
-            for col in df1.columns:
-                if not df1[col].equals(df2[col]):
-                    print(col)
-            import ipdb; ipdb.set_trace()  # breakpoint 919beb16 //
-
-
 
 # import os
 
