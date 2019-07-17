@@ -131,6 +131,41 @@ class Chobjer:
             from_rev_id = to_rev_id
 
 
+    def iter_chobjs2(self):
+
+        revs = self.get_revisions_dict()
+        revs_iter = iter(revs.items())
+        from_rev_id, first_rev = next(revs_iter)
+        first_rev.from_id = None
+
+        first_rev.tokens = np.array([i for i in self.__get_token_ids(from_rev_id)])
+        first_rev.values  = np.array([i for i in self.__get_values(from_rev_id)])
+        #first_rev.content = self.get_rev_content(from_rev_id)
+
+        # Getting first revision object and adding content ot it
+        self.wiki = Wiki(self.article, revs, self.ww_pickle.tokens)
+
+        # adding content to all other revision and finding change object
+        # between them.
+        for to_rev_id, _ in revs_iter:
+            from_rev = self.wiki.revisions[from_rev_id]
+            to_rev = self.wiki.revisions[to_rev_id]
+
+            to_rev.from_id = from_rev.id
+            from_rev.to_id = to_rev.id
+
+            to_rev.tokens = np.array([i for i in self.__get_token_ids(to_rev_id)])
+            to_rev.values  = np.array([i for i in self.__get_values(to_rev_id)])
+
+            # for i, to_rev_id in enumerate(list(revs.index[1:])):
+            #to_rev_content = self.get_rev_content(to_rev_id)
+
+            to_rev.inserted_continuous_pos()
+            for chobj in from_rev.iter_chobs(self.article, to_rev, self.context):
+                yield chobj
+
+            from_rev_id = to_rev_id
+
 
 
     def save(self, save_dir):

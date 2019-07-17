@@ -24,7 +24,7 @@ class Wiki:
     def create_change(self, from_rev, to_rev, epsilon_size):
         try:
             to_rev.inserted_continuous_pos()
-            from_rev.create_change_object(to_rev, epsilon_size)
+            from_rev.create_change_object(self.article, to_rev, epsilon_size)
         except:
             print("exception occurred in calculating change object",
                   traceback.format_exc())
@@ -33,7 +33,7 @@ class Wiki:
     def get_chobjs(self, from_rev, to_rev, epsilon_size):
         try:
             to_rev.inserted_continuous_pos()
-            from_rev.create_change_object(to_rev, epsilon_size)
+            from_rev.create_change_object(self.article, to_rev, epsilon_size)
         except:
             print("exception occurred in calculating change object",
                   traceback.format_exc())
@@ -66,3 +66,10 @@ class Wiki:
                         chobj['del_tokens_str'],
                         chobj['right_token_str']),
             }
+
+
+    def iter_chobs(self, from_rev, to_rev, epsilon_size):
+        to_rev.inserted_continuous_pos()
+        return from_rev.create_change_object(self.article, to_rev, epsilon_size)
+
+        
