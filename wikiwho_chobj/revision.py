@@ -169,6 +169,11 @@ class Revision:
                     # del_tokens_str
                     tuple(self.values[del_slice]),
 
+                    # left_neigh_slice
+                    ln_slice,
+                    # right_neigh_slice
+                    rn_slice,
+
                     # left_token
                     self.tokens[ln_slice].tolist(),
                     # right_token
@@ -220,6 +225,11 @@ class Revision:
                     # del_tokens_str
                     tuple(),
 
+                    # left_neigh_slice
+                    ln_slice,
+                    # right_neigh_slice
+                    rn_slice,
+
                     # left_token
                     self.tokens[ln_slice].tolist(),
                     # right_token
@@ -268,6 +278,11 @@ class Revision:
                     tuple(),
                     # del_tokens_str
                     tuple(self.values[del_slice]),
+
+                    # left_neigh_slice
+                    ln_slice,
+                    # right_neigh_slice
+                    rn_slice,
 
                     # left_token
                     self.tokens[ln_slice].tolist(),
@@ -320,6 +335,11 @@ class Revision:
                     # del_tokens_str
                     tuple(),
 
+                    # left_neigh_slice
+                    ln_slice,
+                    # right_neigh_slice
+                    rn_slice,
+
                     # left_token
                     self.tokens[ln_slice].tolist(),
                     # right_token
@@ -369,6 +389,11 @@ class Revision:
                     # del_tokens_str
                     tuple(self.values[del_slice]),
 
+                    # left_neigh_slice
+                    ln_slice,
+                    # right_neigh_slice
+                    rn_slice,
+
                     # left_token
                     self.tokens[ln_slice].tolist(),
                     # right_token
@@ -388,6 +413,7 @@ class Revision:
             'del_start_pos', 'del_end_pos',
             "ins_tokens", "del_tokens",
             "ins_tokens_str", "del_tokens_str",
+            "left_neigh_slice", "right_neigh_slice",
             "left_token", "right_token",
             "left_token_str", "right_token_str"
         ]).sort_values(['left_neigh', 'right_neigh']).reset_index(drop=True)
@@ -397,12 +423,13 @@ class Revision:
                 print (col)
                 import ipdb; ipdb.set_trace()  # breakpoint 5c733010 //
 
-
+        #self.change_df = change_df
         
 
-        if not self.change_df.drop(columns=["left_neigh_slice", "right_neigh_slice"]).equals(change_df):
+        if not self.change_df.equals(change_df):
             import ipdb; ipdb.set_trace()  # breakpoint eda81dfc //
 
+        self.change_df = change_df
 
 
 
