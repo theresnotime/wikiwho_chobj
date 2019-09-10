@@ -76,10 +76,13 @@ class Chobjer:
         # prepare the first revision
         from_rev_id, from_rev = next(revs_iter)
         from_rev.from_id = None
-        from_rev.tokens = np.array(
-            [i for i in self.__get_token_ids(from_rev_id)])
-        from_rev.values = np.array(
-            [i for i in self.__get_values(from_rev_id)])
+
+        # prepare the the next revisions
+        from_rev.tokens = np.fromiter(self.__get_token_ids(from_rev_id), float)
+        from_rev.values = np.fromiter(self.__get_values(from_rev_id), '<U12')
+        # in case the above does not work
+        #to_rev.values = np.array([i for i in self.__get_values(to_rev_id)])
+
 
         # Adding the tokens to all revisions
         self.add_all_tokens(revs, self.ww_pickle.tokens)
@@ -96,9 +99,10 @@ class Chobjer:
             from_rev.to_id = to_rev.id
 
             # prepare the the next revisions
-            to_rev.tokens = np.array(
-                [i for i in self.__get_token_ids(to_rev_id)])
-            to_rev.values = np.array([i for i in self.__get_values(to_rev_id)])
+            to_rev.tokens = np.fromiter(self.__get_token_ids(to_rev_id), float)
+            to_rev.values = np.fromiter(self.__get_values(to_rev_id), '<U12')
+            # in case the above does not work
+            #to_rev.values = np.array([i for i in self.__get_values(to_rev_id)])
 
             # complete the next revision
             to_rev.inserted_continuous_pos()
