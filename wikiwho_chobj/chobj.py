@@ -20,21 +20,26 @@ class Chobjer:
         self.article = article
         self.context = context
 
-    def get_revisions(self):
-        revisions = self.ww_pickle.revisions
-        return pd.DataFrame.from_records(((rev_id, Revision(rev_id, revisions[rev_id].timestamp,
-                                                            revisions[rev_id].editor)) for rev_id in self.ww_pickle.ordered_revisions),
-                                         columns=['id', ''], index='id').iloc[:, 0]
-
     def get_revisions_dict(self):
         revisions = self.ww_pickle.revisions
-        return {rev_id: Revision(
-            rev_id,
-            datetime.datetime.strptime(
-                revisions[rev_id].timestamp, r'%Y-%m-%dT%H:%M:%SZ'),
-            # revisions[rev_id].timestamp,
-            revisions[rev_id].editor) for rev_id in self.ww_pickle.ordered_revisions}
+        return {
+            rev_id: Revision(
+                rev_id,
+                datetime.datetime.strptime(
+                    revisions[rev_id].timestamp, r'%Y-%m-%dT%H:%M:%SZ'),
+                # revisions[rev_id].timestamp,
+                revisions[rev_id].editor) for rev_id in self.ww_pickle.ordered_revisions
+        }
 
+    def get_one_revision(self, rev_id):
+        revisions = self.ww_pickle.revisions
+        return Revision(
+                rev_id,
+                datetime.datetime.strptime(
+                    revisions[rev_id].timestamp, r'%Y-%m-%dT%H:%M:%SZ'),
+                revisions[rev_id].editor)
+
+    
     def __iter_rev_content(self, rev_id):
         yield ('{st@rt}', -1)
         for word in iter_rev_tokens(self.ww_pickle.revisions[rev_id]):
@@ -53,10 +58,6 @@ class Chobjer:
             yield word.value
         yield '{$nd}'
 
-    def get_rev_content(self, rev_id):
-        return pd.DataFrame(self.__iter_rev_content(rev_id), columns=['str', 'token_id'])
-
-
     def add_all_token(self, revisions, tokens):
         for token in tokens:
             # token.str
@@ -66,14 +67,15 @@ class Chobjer:
             for out_revision in token.outbound:
                 revisions[out_revision].removed.append(token.token_id)
 
-
     def iter_chobjs(self):
 
+        # get all the revisions
         revs = self.get_revisions_dict()
         revs_iter = iter(revs.items())
+
+        # prepare the first revision
         from_rev_id, first_rev = next(revs_iter)
         first_rev.from_id = None
-
         first_rev.tokens = np.array(
             [i for i in self.__get_token_ids(from_rev_id)])
         first_rev.values = np.array(
@@ -85,20 +87,26 @@ class Chobjer:
         # adding content to all other revision and finding change object
         # between them.
         for to_rev_id, _ in revs_iter:
+
+            # the two revisions that will be compare
             from_rev = revs[from_rev_id]
             to_rev = revs[to_rev_id]
 
+            # make the revisions aware from the others ids
             to_rev.from_id = from_rev.id
             from_rev.to_id = to_rev.id
 
+            # prepare the the next revisions
             to_rev.tokens = np.array(
                 [i for i in self.__get_token_ids(to_rev_id)])
             to_rev.values = np.array([i for i in self.__get_values(to_rev_id)])
 
+            # complete the next revision
             to_rev.inserted_continuous_pos()
             for chobj in from_rev.iter_chobs(self.article, to_rev, self.context):
                 yield chobj
 
+            # the to revision becomes the from revision
             from_rev_id = to_rev_id
 
         self.revs = revs
@@ -108,32 +116,3 @@ class Chobjer:
             save_dir, f"{self.article}_change.pkl")
         with open(save_filepath, "wb") as file:
             pickle.dump(self.wiki, file)
-
-    def save_hd5(self, save_dir):
-
-        revisions = self.wiki.revisions
-        revisions = pd.Series(data=revisions, index=(
-            r.id for r in revisions.values()))
-
-        change_objects = [
-            x.change_df for x in revisions if hasattr(x, 'change_df')]
-
-        timestamp_s = pd.to_datetime(
-            [rev.timestamp for rev in revisions.values.ravel().tolist()])
-
-        time_gap = pd.to_timedelta(timestamp_s[1:] - timestamp_s[:-1])
-
-        rev_ids = [rev.id for rev in revisions.tolist()]
-        from_rev_ids = rev_ids[:-1]
-        to_rev_ids = rev_ids[1:]
-
-        editor_s = [rev.editor for rev in revisions.tolist()]
-
-        index = list(zip(*[from_rev_ids, to_rev_ids,
-                           timestamp_s.tolist()[1:], time_gap, editor_s[1:]]))
-        change_df = pd.concat(change_objects, sort=False, keys=index, names=[
-                              "from revision id", "to revision id", "timestamp", "timegap", "editor"])
-
-        change_dataframe_path = os.path.join(
-            save_dir, f"{self.article}_change.h5")
-        change_df.to_hdf(change_dataframe_path, key="data", mode='w')
