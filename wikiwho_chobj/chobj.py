@@ -19,9 +19,10 @@ class Chobjer:
             article, pickle_path=pickles_path, lang=lang)
         self.article = article
         self.context = context
+        self.revisions = self.ww_pickle.revisions
 
     def get_revisions_dict(self):
-        revisions = self.ww_pickle.revisions
+        revisions = self.revisions
         return {
             rev_id: Revision(
                 rev_id,
@@ -32,7 +33,7 @@ class Chobjer:
         }
 
     def get_one_revision(self, rev_id):
-        revisions = self.ww_pickle.revisions
+        revisions = self.revisions
         return Revision(
             rev_id,
             datetime.datetime.strptime(
@@ -41,19 +42,19 @@ class Chobjer:
 
     def __iter_rev_content(self, rev_id):
         yield ('{st@rt}', -1)
-        for word in iter_rev_tokens(self.ww_pickle.revisions[rev_id]):
+        for word in iter_rev_tokens(self.revisions[rev_id]):
             yield (word.value, word.token_id)
         yield ('{$nd}', -2)
 
     def __get_token_ids(self, rev_id):
         yield -1
-        for word in iter_rev_tokens(self.ww_pickle.revisions[rev_id]):
+        for word in iter_rev_tokens(self.revisions[rev_id]):
             yield word.token_id
         yield -2
 
     def __get_values(self, rev_id):
         yield '{st@rt}'
-        for word in iter_rev_tokens(self.ww_pickle.revisions[rev_id]):
+        for word in iter_rev_tokens(self.revisions[rev_id]):
             yield word.value
         yield '{$nd}'
 
@@ -112,7 +113,6 @@ class Chobjer:
             # the to_revision will become the from revision in next iteration
             from_rev = to_rev
 
-        self.revs = revs
 
     def save(self, save_dir):
         save_filepath = os.path.join(
