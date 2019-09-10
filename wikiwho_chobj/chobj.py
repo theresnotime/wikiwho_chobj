@@ -34,12 +34,11 @@ class Chobjer:
     def get_one_revision(self, rev_id):
         revisions = self.ww_pickle.revisions
         return Revision(
-                rev_id,
-                datetime.datetime.strptime(
-                    revisions[rev_id].timestamp, r'%Y-%m-%dT%H:%M:%SZ'),
-                revisions[rev_id].editor)
+            rev_id,
+            datetime.datetime.strptime(
+                revisions[rev_id].timestamp, r'%Y-%m-%dT%H:%M:%SZ'),
+            revisions[rev_id].editor)
 
-    
     def __iter_rev_content(self, rev_id):
         yield ('{st@rt}', -1)
         for word in iter_rev_tokens(self.ww_pickle.revisions[rev_id]):
@@ -58,7 +57,7 @@ class Chobjer:
             yield word.value
         yield '{$nd}'
 
-    def add_all_token(self, revisions, tokens):
+    def add_all_tokens(self, revisions, tokens):
         for token in tokens:
             # token.str
             revisions[token.origin_rev_id].added.append(token.token_id)
@@ -74,26 +73,25 @@ class Chobjer:
         revs_iter = iter(revs.items())
 
         # prepare the first revision
-        from_rev_id, first_rev = next(revs_iter)
-        first_rev.from_id = None
-        first_rev.tokens = np.array(
+        from_rev_id, from_rev = next(revs_iter)
+        from_rev.from_id = None
+        from_rev.tokens = np.array(
             [i for i in self.__get_token_ids(from_rev_id)])
-        first_rev.values = np.array(
+        from_rev.values = np.array(
             [i for i in self.__get_values(from_rev_id)])
 
-        # Getting first revision object and adding content ot it
-        self.add_all_token(revs, self.ww_pickle.tokens)
+        # Adding the tokens to all revisions
+        self.add_all_tokens(revs, self.ww_pickle.tokens)
 
-        # adding content to all other revision and finding change object
-        # between them.
+        # adding content to all other revision and finding change objects
+        # between them
         for to_rev_id, _ in revs_iter:
 
             # the two revisions that will be compare
-            from_rev = revs[from_rev_id]
             to_rev = revs[to_rev_id]
 
             # make the revisions aware from the others ids
-            to_rev.from_id = from_rev.id
+            to_rev.from_id = from_rev_id
             from_rev.to_id = to_rev.id
 
             # prepare the the next revisions
@@ -107,7 +105,12 @@ class Chobjer:
                 yield chobj
 
             # the to revision becomes the from revision
+            # release memory
+            revs[from_rev_id] = None
             from_rev_id = to_rev_id
+
+            # the to_revision will become the from revision in next iteration
+            from_rev = to_rev
 
         self.revs = revs
 

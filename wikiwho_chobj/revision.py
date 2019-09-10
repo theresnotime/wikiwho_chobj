@@ -16,6 +16,16 @@ class Revision:
         self.added = list()
         self.removed = list()
 
+    def clean(self):
+        self.added = None
+        self.removed = None
+        self.ins_start_pos = None
+        self.ins_end_pos = None
+        self.start_token_id = None
+        self.end_token_id = None
+        self.tokens = None
+        self.values = None
+
     def inserted_continuous_pos(self):
         added = np.isin(self.tokens, self.added,
                         assume_unique=True).astype(np.int)
@@ -36,9 +46,9 @@ class Revision:
         del_left_neigh = del_start_pos - 1
         del_right_neigh = del_end_pos + 1
 
-        self.ins_left_neigh = np.nonzero(
+        ins_left_neigh = np.nonzero(
             np.isin(self.tokens, to_rev.start_token_id, assume_unique=True))[0]
-        self.ins_right_neigh = np.nonzero(
+        ins_right_neigh = np.nonzero(
             np.isin(self.tokens, to_rev.end_token_id, assume_unique=True))[0]
 
         did = 0
@@ -46,15 +56,15 @@ class Revision:
 
         chdata = []
 
-        while iid < len(self.ins_left_neigh) and did < len(del_left_neigh):
+        while iid < len(ins_left_neigh) and did < len(del_left_neigh):
 
-            if (self.ins_left_neigh[iid] == del_left_neigh[did] and
-                    self.ins_right_neigh[iid] == del_right_neigh[did]):
+            if (ins_left_neigh[iid] == del_left_neigh[did] and
+                    ins_right_neigh[iid] == del_right_neigh[did]):
 
                 isp = to_rev.ins_start_pos[iid]
                 iep = to_rev.ins_end_pos[iid]
-                ln = self.ins_left_neigh[iid]
-                rn = self.ins_right_neigh[iid]
+                ln = ins_left_neigh[iid]
+                rn = ins_right_neigh[iid]
                 dsp = del_start_pos[did]
                 dep = del_end_pos[did]
 
@@ -94,12 +104,12 @@ class Revision:
 
                 did += 1
                 iid += 1
-            elif (self.ins_left_neigh[iid] <= del_left_neigh[did]):
+            elif (ins_left_neigh[iid] <= del_left_neigh[did]):
 
                 isp = to_rev.ins_start_pos[iid]
                 iep = to_rev.ins_end_pos[iid]
-                ln = self.ins_left_neigh[iid]
-                rn = self.ins_right_neigh[iid]
+                ln = ins_left_neigh[iid]
+                rn = ins_right_neigh[iid]
                 dsp = -1
                 dep = -1
 
@@ -137,7 +147,7 @@ class Revision:
                 }
 
                 iid += 1
-            elif (self.ins_left_neigh[iid] > del_left_neigh[did]):
+            elif (ins_left_neigh[iid] > del_left_neigh[did]):
                 isp = -1
                 iep = -1
                 ln = del_left_neigh[did]
@@ -180,12 +190,12 @@ class Revision:
 
                 did += 1
 
-        while iid < len(self.ins_left_neigh):
+        while iid < len(ins_left_neigh):
 
             isp = to_rev.ins_start_pos[iid]
             iep = to_rev.ins_end_pos[iid]
-            ln = self.ins_left_neigh[iid]
-            rn = self.ins_right_neigh[iid]
+            ln = ins_left_neigh[iid]
+            rn = ins_right_neigh[iid]
             dsp = -1
             dep = -1
 

@@ -19,8 +19,8 @@ if __name__ == "__main__":
     from wikiwho_chobj import Chobjer
     from wikiwho_chobj.utils import Timer
 
-    #ids = [2161298, 1620389, 6187]
-    ids = [2161298, 1620389]
+    ids = [2161298, 1620389, 6187]
+    #ids = [2161298, 1620389]
 
     print('x')
     for _id in ids:
