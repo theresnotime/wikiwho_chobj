@@ -16,16 +16,6 @@ class Revision:
         self.added = list()
         self.removed = list()
 
-    def clean(self):
-        self.added = None
-        self.removed = None
-        self.ins_start_pos = None
-        self.ins_end_pos = None
-        self.start_token_id = None
-        self.end_token_id = None
-        self.tokens = None
-        self.values = None
-
     def inserted_continuous_pos(self):
         added = np.isin(self.tokens, self.added,
                         assume_unique=True).astype(np.int)
