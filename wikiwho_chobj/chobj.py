@@ -77,16 +77,10 @@ class Chobjer:
         from_rev_id, from_rev = next(revs_iter)
         from_rev.from_id = None
 
-        # prepare the the next revisions
-        from_rev.tokens = np.fromiter(self.__get_token_ids(from_rev_id), float)
-        # creating str numpy arrays is slow
-        #from_rev.values = np.array([i for i in self.__get_values(from_rev_id)])
-        # this is more efficient but truncate words
-        #from_rev.values = np.fromiter(self.__get_values(from_rev_id), '<U25')
-        # the faster option is then python lists
+        # prepare the the next revisions (numpy arrays for tokens ids)
+        from_rev.tokens = np.fromiter(self.__get_token_ids(from_rev_id), int)
+        # the faster option for str is then python lists
         from_rev.values = list(self.__get_values(from_rev_id))
-        
-
 
         # Adding the tokens to all revisions
         self.add_all_tokens(revs, self.ww_pickle.tokens)
@@ -102,13 +96,9 @@ class Chobjer:
             to_rev.from_id = from_rev_id
             from_rev.to_id = to_rev.id
 
-            # prepare the the next revisions
-            to_rev.tokens = np.fromiter(self.__get_token_ids(to_rev_id), float)
-            # creating str numpy arrays is slow
-            #to_rev.values = np.array([i for i in self.__get_values(to_rev_id)])
-            # this is more efficient but truncate words
-            #to_rev.values = np.fromiter(self.__get_values(to_rev_id), '<U25')
-            # the faster option is then python lists
+            # prepare the the next revisions (numpy arrays for tokens ids)
+            to_rev.tokens = np.fromiter(self.__get_token_ids(to_rev_id), int)
+            # the faster option for str is then python lists
             to_rev.values = list(self.__get_values(to_rev_id))
 
             # complete the next revision
@@ -123,7 +113,6 @@ class Chobjer:
 
             # the to_revision will become the from revision in next iteration
             from_rev = to_rev
-
 
     def save(self, save_dir):
         save_filepath = os.path.join(
