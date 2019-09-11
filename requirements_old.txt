@@ -1,0 +1,7 @@
+jupyter
+pandas
+numpy
+requests
+nbstripout
+wikiwho_wrapper
+

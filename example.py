@@ -21,7 +21,8 @@ if __name__ == "__main__":
     for _id in ids:
         print(_id)
 
-        co = Chobjer(article=_id, pickles_path='pickles', lang='en', context=5, starting_revid=starting_revid)
+        co = Chobjer(article=_id, pickles_path='pickles', lang='en', 
+            context=5, starting_revid=starting_revid)
 
         with Timer():
             chobs1 = [x for x in co.iter_chobjs()]
