@@ -79,9 +79,13 @@ class Chobjer:
 
         # prepare the the next revisions
         from_rev.tokens = np.fromiter(self.__get_token_ids(from_rev_id), float)
-        from_rev.values = np.fromiter(self.__get_values(from_rev_id), '<U12')
-        # in case the above does not work
-        #to_rev.values = np.array([i for i in self.__get_values(to_rev_id)])
+        # creating str numpy arrays is slow
+        #from_rev.values = np.array([i for i in self.__get_values(from_rev_id)])
+        # this is more efficient but truncate words
+        #from_rev.values = np.fromiter(self.__get_values(from_rev_id), '<U25')
+        # the faster option is then python lists
+        from_rev.values = list(self.__get_values(from_rev_id))
+        
 
 
         # Adding the tokens to all revisions
@@ -100,9 +104,12 @@ class Chobjer:
 
             # prepare the the next revisions
             to_rev.tokens = np.fromiter(self.__get_token_ids(to_rev_id), float)
-            to_rev.values = np.fromiter(self.__get_values(to_rev_id), '<U12')
-            # in case the above does not work
+            # creating str numpy arrays is slow
             #to_rev.values = np.array([i for i in self.__get_values(to_rev_id)])
+            # this is more efficient but truncate words
+            #to_rev.values = np.fromiter(self.__get_values(to_rev_id), '<U25')
+            # the faster option is then python lists
+            to_rev.values = list(self.__get_values(to_rev_id))
 
             # complete the next revision
             to_rev.inserted_continuous_pos()
