@@ -180,6 +180,7 @@ class Revision:
 
                 did += 1
 
+        # if there is left over inserted tokens
         while iid < len(ins_left_neigh):
 
             isp = to_rev.ins_start_pos[iid]
@@ -224,6 +225,7 @@ class Revision:
 
             iid += 1
 
+        # if there is left over deleted tokens
         while did < len(del_left_neigh):
             isp = -1
             iep = -1
