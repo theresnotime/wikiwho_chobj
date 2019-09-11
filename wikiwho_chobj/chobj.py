@@ -14,12 +14,13 @@ from .utils import Timer
 
 class Chobjer:
 
-    def __init__(self, article, pickles_path, lang, context):
+    def __init__(self, article, pickles_path, lang, context, starting_revid = -1):
         self.ww_pickle = open_pickle(
             article, pickle_path=pickles_path, lang=lang)
         self.article = article
         self.context = context
         self.revisions = self.ww_pickle.revisions
+        self.starting_revid = starting_revid
 
     def get_revisions_dict(self):
         revisions = self.revisions
@@ -29,7 +30,8 @@ class Chobjer:
                 datetime.datetime.strptime(
                     revisions[rev_id].timestamp, r'%Y-%m-%dT%H:%M:%SZ'),
                 # revisions[rev_id].timestamp,
-                revisions[rev_id].editor) for rev_id in self.ww_pickle.ordered_revisions
+                revisions[rev_id].editor) 
+            for rev_id in self.ww_pickle.ordered_revisions if rev_id >= self.starting_revid
         }
 
     def get_one_revision(self, rev_id):
@@ -61,11 +63,14 @@ class Chobjer:
     def add_all_tokens(self, revisions, tokens):
         for token in tokens:
             # token.str
-            revisions[token.origin_rev_id].added.append(token.token_id)
+            if token.origin_rev_id >= self.starting_revid:
+                revisions[token.origin_rev_id].added.append(token.token_id)
             for in_revision in token.inbound:
-                revisions[in_revision].added.append(token.token_id)
+                if in_revision >= self.starting_revid:
+                    revisions[in_revision].added.append(token.token_id)
             for out_revision in token.outbound:
-                revisions[out_revision].removed.append(token.token_id)
+                if out_revision >= self.starting_revid:
+                    revisions[out_revision].removed.append(token.token_id)
 
     def iter_chobjs(self):
 

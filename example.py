@@ -7,15 +7,21 @@ import pandas as pd
 
 if __name__ == "__main__":
 
+    starting_revid = -1
     ids = [2161298, 1620389, 6187]
     #ids = [2161298]
     #ids = [6886]
+    #ids = [2161298]
+    
 
-    print('x')
+    # to test with id
+    #ids = [2161298]
+    #starting_revid = 855387192
+
     for _id in ids:
         print(_id)
 
-        co = Chobjer(article=_id, pickles_path='pickles', lang='en', context=5)
+        co = Chobjer(article=_id, pickles_path='pickles', lang='en', context=5, starting_revid=starting_revid)
 
         with Timer():
             chobs1 = [x for x in co.iter_chobjs()]
@@ -33,6 +39,7 @@ if __name__ == "__main__":
             chobs2 = [x for x in copd.iter_chobjs()]
 
         df_old = pd.DataFrame(chobs2, columns=chobs2[0].keys())
+        df_old = df_old[df_old['from_rev'] >= starting_revid]
 
         df_old = df_old.sort_values([
             'page_id', 'from_rev', 'to_rev', 'from_timestamp',
