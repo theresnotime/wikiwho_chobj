@@ -1,2 +1,3 @@
 numpy
 wikiwho-pickle
+WikiWho
