@@ -6,7 +6,6 @@ from time import sleep
 import numpy as np
 
 from WikiWho.utils import iter_rev_tokens
-from wikiwho import open_pickle
 
 from .revision import Revision
 from .utils import Timer
@@ -15,6 +14,7 @@ from .utils import Timer
 class Chobjer:
 
     def __init__(self, article, pickles_path, lang, context, starting_revid = -1):
+        from wikiwho import open_pickle
         self.ww_pickle = open_pickle(
             article, pickle_path=pickles_path, lang=lang)
         self.article = article
